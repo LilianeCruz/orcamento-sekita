@@ -29,6 +29,8 @@ export const limparParams = (p: unknown[] = []) => p.map((x) => (x === undefined
 // Guarda o resultado das leituras (SELECT) até a próxima escrita: os cálculos (DRE, balanço, caixa, comparação...) chamam uns aos outros e repetem as mesmas
 // consultas muitas vezes; assim cada consulta vai ao banco uma vez só por requisição. Qualquer comando que não seja SELECT/WITH apaga o que foi guardado.
 // Cada leitura devolve uma cópia, porque quem chama pode alterar as linhas.
+// só para medir (ferramentas/medir_tempo.mts): quantas vezes cada consulta foi ao banco
+export const perfil = { ativo: false, textos: new Map<string, number>() };
 export function comCache(executar: (texto: string, params: unknown[]) => Promise<any[]>) {
   const guardado = new Map<string, any[]>();
   return async (texto: string, params: unknown[] = []): Promise<any[]> => {
@@ -37,6 +39,7 @@ export function comCache(executar: (texto: string, params: unknown[]) => Promise
     const chave = texto + "\u0000" + JSON.stringify(params, (_k, v) => (typeof v === "bigint" ? String(v) : v));
     const antes = guardado.get(chave);
     if (antes) return structuredClone(antes);
+    if (perfil.ativo) perfil.textos.set(texto.slice(0, 110), (perfil.textos.get(texto.slice(0, 110)) ?? 0) + 1);
     const linhas = await executar(texto, params);
     guardado.set(chave, structuredClone(linhas));
     return linhas;

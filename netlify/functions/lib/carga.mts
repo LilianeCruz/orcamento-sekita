@@ -12,7 +12,7 @@ export async function carregarJson(bd: Bd, dados: DadosSqlite): Promise<void> {
     if (!t || !t.linhas.length) continue;
     const objetos = t.linhas.map((l) => Object.fromEntries(t.colunas.map((c, i) => [c, l[i]])));
     for (let i = 0; i < objetos.length; i += 2000) {
-      await bd.q(`INSERT INTO ${tabela} SELECT * FROM jsonb_populate_recordset(null::${tabela}, ?::jsonb)`, [JSON.stringify(objetos.slice(i, i + 2000))]);
+      await bd.q(`INSERT INTO ${tabela} SELECT * FROM jsonb_populate_recordset(null::${tabela}, ?::text::jsonb)`, [JSON.stringify(objetos.slice(i, i + 2000))]);
     }
   }
   // o contador do SQLite (sqlite_sequence) lembra os ids já usados, mesmo de linhas apagadas: o próximo id continua depois dele
