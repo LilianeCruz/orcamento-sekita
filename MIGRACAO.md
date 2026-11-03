@@ -40,7 +40,14 @@ Cópia do sistema para trabalhar na nuvem. O sistema original (`Orcamento_Sekita
   - Login: `web/login.html`, `web/login.js` e `web/auth.js` (Supabase Auth). A tela principal só abre com sessão e tem o botão **Sair**; toda chamada à API leva o token.
   - Falta: testar com as chaves reais (depois da configuração abaixo) e recriar os dados iniciais do SQLite (classificações de investimento, produtos padrão).
 
-- **Fase 1 (em andamento), portado e validado contra o Python (testes de paridade com o banco real):** versões (criar, copiar, período, horizonte, aprovar, excluir), produtos, grupos de custo e Arrendamentos (cadastro, parcelas, preços, leitura, cálculo e comparação). Faltam, desta fase: áreas, produtividade, preços de venda, custos variáveis, pecuária e premissas por produto.
+- **Portado e validado contra o Python** (testes de paridade com o banco real: escritas, leituras e comparações, tabela por tabela):
+  versões (criar, copiar, período, horizonte, aprovar, excluir), produtos, grupos de custo, Arrendamentos, áreas, produtividade, preços de venda, pecuária,
+  custos variáveis, premissas por produto, rebanho e **resultado por produto** (motor de safra e anual com estoque), anotações (sem a visão "todas") e Início (andamento).
+- **Portado, ainda sem teste de paridade:** premissas de transportadora.
+- **Falta portar (nesta ordem, por dependência):** realizado (núcleo: saldo inicial, prazos, valor realizado) → premissas dos demonstrativos → investimentos e depreciação →
+  capital de giro → captações → dívidas → premissas da DRE (dre_padrao) → DRE → balanço → patrimônio → fluxo de caixa (dívida de giro automática, com convergência) →
+  demonstrativos (usos e fontes, indicadores) → importação de planilhas (realizado, DRE, dívidas) → orçado × realizado → comparação e impressão → carga dos dados.
+  Como testar cada etapa: acrescentar as operações nos registros `ferramentas/registro_ops.py` e `testes/registro_ops.mts` e criar o teste de paridade da fase.
 - **Alterações feitas no sistema local depois da cópia** devem ser replicadas aqui. Última sincronização: excluir orçamento, tabelas largas (horizontes longos), textos retirados das telas e manual.
 
 ## Configuração (uma vez)

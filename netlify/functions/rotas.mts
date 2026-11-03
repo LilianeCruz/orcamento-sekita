@@ -16,6 +16,7 @@ import * as custos from "./servicos/custos.mts";
 import * as premissas from "./servicos/premissas.mts";
 import * as rebanho from "./servicos/rebanho.mts";
 import * as resultado from "./servicos/resultado.mts";
+import * as transp from "./servicos/transportadora.mts";
 
 export const rotas = new Roteador();
 const r = rotas;
@@ -130,3 +131,9 @@ r.put("/versoes/:vid/rebanho/:cid/:campo/:ano", async ({ bd, usuario, params, co
 r.post("/versoes/:vid/rebanho/:cid/:campo/replicar", async ({ bd, usuario, params, corpo }) => ({ anos_alterados: await rebanho.replicarRebanho(bd, num(params.vid), num(params.cid), params.campo, corpo.ano, usuario.email) }));
 r.get("/versoes/:vid/resultado", ({ bd, params }) => resultado.calcularResultado(bd, num(params.vid)));
 r.get("/comparar-resultado", ({ bd, consulta }) => resultado.compararResultado(bd, num(consulta.get("a")!), num(consulta.get("b")!)));
+
+// ---- premissas de transportadora
+r.get("/versoes/:vid/transportadora", ({ bd, params }) => transp.lerTransportadora(bd, num(params.vid)));
+r.post("/versoes/:vid/transportadora/replicar-todos", ({ bd, usuario, params, corpo }) => transp.replicarTodosTransportadora(bd, num(params.vid), corpo.ano, usuario.email));
+r.put("/versoes/:vid/transportadora/:campo/:ano", async ({ bd, usuario, params, corpo }) => { await transp.salvarTransportadora(bd, num(params.vid), params.campo, num(params.ano), corpo.valor, usuario.email); return { ok: true }; });
+r.post("/versoes/:vid/transportadora/:campo/replicar", async ({ bd, usuario, params, corpo }) => ({ anos_alterados: await transp.replicarTransportadora(bd, num(params.vid), params.campo, corpo.ano, usuario.email) }));
