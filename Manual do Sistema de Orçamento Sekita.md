@@ -37,7 +37,7 @@ Premissas de balanço (prazos) · Investimentos · Dividendos · Dívidas
 |---|---|
 | **Novo orçamento** | Cria um orçamento novo (em branco ou copiado de outro). |
 | **Início** | Visão geral: andamento do preenchimento, próximos passos, anotações pendentes. |
-| **Orçamentos** | Lista de todos os orçamentos: abrir, criar Reprojetado, aprovar e travar, comparar, imprimir. |
+| **Orçamentos** | Lista de todos os orçamentos: abrir, criar Reprojetado, aprovar e travar, excluir, comparar, imprimir. |
 | **Premissas** | Grupo com as telas onde você digita: Produção, Investimento, DRE, Transportadora, Balanço, Dividendos e Dívidas. |
 | **Cadastros** | Produtos, Rubricas de custo, Tipos de premissas da DRE, Tipos de investimento. |
 | **Demonstrativos** (grupo) | DRE, Balanço, Fluxo de caixa, Usos e fontes e Indicadores: tudo calculado, somente leitura. |
@@ -101,6 +101,7 @@ Aqui ficam todos os orçamentos. Cada linha mostra:
 | Duas folhas | **Criar Reprojetado** | Cria uma cópia para revisar durante o ano. O original **não é alterado**. |
 | Impressora | **Imprimir orçamento** | Gera um PDF com as premissas e/ou os demonstrativos, ano a ano (ver abaixo). |
 | Check (visto) | **Aprovar e travar** | Depois de aprovado, o orçamento não pode mais ser editado. Só aparece em orçamentos em elaboração. |
+| Lixeira | **Excluir orçamento** | Apaga o orçamento e todos os dados dele (pede confirmação; não dá para desfazer). Só aparece em orçamentos em elaboração: os aprovados e travados não podem ser excluídos. |
 
 ### Tipos de orçamento
 - **Orçado:** o orçamento criado do zero (normalmente o aprovado do ano).
@@ -112,7 +113,7 @@ Aqui ficam todos os orçamentos. Cada linha mostra:
 |---|---|
 | **Nome do orçamento** | Ex.: "Orçamento 2027". |
 | **Copiar os dados de (opcional)** | Escolhendo um orçamento existente, o novo nasce como **cenário**, com todos os dados e o mesmo período. Deixando em branco, nasce vazio. |
-| **Ano inicial / Ano final** | Período do orçamento (máximo 30 anos). Os atalhos "+1, +3, +5, +10 anos" estendem o fim. |
+| **Ano inicial / Ano final** | Período do orçamento (máximo 30 anos). Os atalhos "+1, +3, +5, +10 anos" estendem o fim. Com muitos anos (ex.: 20), as tabelas não espremem os campos: cada ano mantém a largura normal, a tabela rola para o lado e a coluna com o nome fica fixa à esquerda. |
 
 ### Comparar orçamentos
 1. Clique em **Comparar orçamentos**: aparecem caixas de seleção ao lado de cada orçamento.

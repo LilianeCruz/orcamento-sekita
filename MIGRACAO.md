@@ -40,6 +40,9 @@ Cópia do sistema para trabalhar na nuvem. O sistema original (`Orcamento_Sekita
   - Login: `web/login.html`, `web/login.js` e `web/auth.js` (Supabase Auth). A tela principal só abre com sessão e tem o botão **Sair**; toda chamada à API leva o token.
   - Falta: testar com as chaves reais (depois da configuração abaixo) e recriar os dados iniciais do SQLite (classificações de investimento, produtos padrão).
 
+- **Fase 1 (em andamento), portado e validado contra o Python (testes de paridade com o banco real):** versões (criar, copiar, período, horizonte, aprovar, excluir), produtos, grupos de custo e Arrendamentos (cadastro, parcelas, preços, leitura, cálculo e comparação). Faltam, desta fase: áreas, produtividade, preços de venda, custos variáveis, pecuária e premissas por produto.
+- **Alterações feitas no sistema local depois da cópia** devem ser replicadas aqui. Última sincronização: excluir orçamento, tabelas largas (horizontes longos), textos retirados das telas e manual.
+
 ## Configuração (uma vez)
 
 **Supabase** (Authentication):

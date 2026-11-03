@@ -772,3 +772,21 @@ $("#nav-modulos").addEventListener("mouseover", (e) => {
 let recolhidoSalvo = false;
 try { recolhidoSalvo = localStorage.getItem(SB_CHAVE) === "1"; } catch (_) { /* ignora */ }
 aplicarMenuRecolhido(recolhidoSalvo);
+
+// Muitos anos (ex.: 20): em vez de espremer as colunas, a tabela ganha largura mínima por coluna e rola na horizontal.
+const COL_MIN = 112, COL_NOME_MIN = 220, COLS_LARGA = 9;
+function ajustarTabelasLargas(raiz) {
+  raiz.querySelectorAll(".scroll > table").forEach((t) => {
+    const n = t.rows[0] ? t.rows[0].cells.length : 0;
+    const larga = n >= COLS_LARGA;
+    t.classList.toggle("larga", larga);
+    const col1 = t.rows[0] && t.rows[0].cells[0];
+    if (larga) {
+      const nome = col1 && col1.classList.contains("sel") ? 38 : COL_NOME_MIN;
+      t.style.minWidth = `${nome + (n - 1) * COL_MIN}px`;
+      if (col1 && !col1.style.width) col1.style.width = `${nome}px`;
+    } else t.style.minWidth = "";
+  });
+}
+new MutationObserver(() => ajustarTabelasLargas(document.querySelector("#conteudo")))
+  .observe(document.querySelector("#conteudo"), { childList: true, subtree: true });

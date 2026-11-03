@@ -213,6 +213,12 @@ def aprovar(vid: int, con: sqlite3.Connection = Depends(conexao), a: str = Depen
     return {"ok": True}
 
 
+@app.delete("/api/versoes/{vid}")
+def excluir_versao(vid: int, con: sqlite3.Connection = Depends(conexao), a: str = Depends(autor)):
+    svc.excluir_versao(con, vid, a)
+    return {"ok": True}
+
+
 # ------------------------------------------------------------------ arrendamentos
 @app.get("/api/versoes/{vid}/arrendamentos")
 def ler(vid: int, con: sqlite3.Connection = Depends(conexao)):

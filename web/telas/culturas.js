@@ -85,11 +85,7 @@ function htmlCulturas() {
       <td><label><input type="checkbox" data-k="ativa" ${c.ativa ? "checked" : ""}> ativa</label></td>
       <td><button class="sec" data-cult-salvar="${c.id}">Salvar</button>
           <button class="link" data-cult-excluir="${c.id}" title="${c.em_uso ? "Tem área lançada: desmarque Ativa em vez de excluir" : ""}">excluir</button></td></tr>`).join("");
-  return `<div class="card"><h2>Produtos</h2>
-    <p class="dim">Cadastro único, usado em todas as versões. A produção é medida em <strong>quilo (kg)</strong>, que é o padrão, em <strong>litro</strong> (ex.: leite) ou em <strong>unidade</strong> (ex.: cabeças, caixas já contadas).
-    A embalagem padrão diz quanto cabe em cada caixa ou saco (ex.: cenoura, caixa de 20 kg); deixe em branco se o produto não tem embalagem.
-    Para esconder um produto sem perder histórico, desmarque <em>ativa</em>.</p>
-    <div class="scroll"><table class="cult-tabela"><thead><tr><th>Produto</th><th>Grupo</th><th title="${DICA_RECEITA}">Receita</th><th title="${DICA_ESTOQUE}">Controle</th><th>Medida em</th><th>Embalagem padrão</th><th>Quantidade por embalagem</th><th></th><th></th></tr></thead>
+  return `<div class="card">    <div class="scroll"><table class="cult-tabela"><thead><tr><th>Produto</th><th>Grupo</th><th title="${DICA_RECEITA}">Receita</th><th title="${DICA_ESTOQUE}">Controle</th><th>Medida em</th><th>Embalagem padrão</th><th>Quantidade por embalagem</th><th></th><th></th></tr></thead>
     <tbody>${linhas || `<tr><td colspan="9" class="dim">Nenhum produto cadastrado ainda. Use o formulário abaixo.</td></tr>`}</tbody></table></div>
     <datalist id="lista-embalagens">${EMBALAGENS.map((u) => `<option value="${u}">`).join("")}</datalist></div>
     <div class="card"><h2>Novo produto</h2><div class="cab" id="nova-cult">

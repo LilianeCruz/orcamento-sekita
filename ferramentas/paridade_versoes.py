@@ -22,5 +22,6 @@ res["cultura"] = cult.criar(con, {"nome": "ZZ Teste", "grupo": "Grãos", "unidad
 cult.atualizar(con, res["cultura"], {"nome": "ZZ Teste 2", "grupo": "Hortifruti", "unidade": "kg", "embalagem": "", "qtd_por_embalagem": 0, "ativa": True, "receita_tipo": "operacional", "estoque_destino": "produto"}, "t@x.com")
 res["lista"] = [dict(c) for c in cult.listar(con)]
 cult.excluir(con, res["cultura"], "t@x.com")
+arr.excluir_versao(con, res["copia1"], "t@x.com")
 con.commit()
 json.dump({"resultados": res, "depois": exportar(copia)}, open(sys.argv[2], "w"), ensure_ascii=False, default=str)

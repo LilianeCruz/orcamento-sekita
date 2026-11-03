@@ -27,7 +27,7 @@ function htmlDre() {
     const ic = l.explicacao ? ` <button class="link ajuda-i" style="color:var(--verde);padding:0 4px" data-pop="${esc(l.explicacao)}" title="Como é calculado">ⓘ</button>` : "";
     return `<tr class="${cls}"><td style="padding-left:${NIVEL_DRE(l)}px">${forte || l.calculo === "soma" ? `<strong>${esc(l.nome)}</strong>` : esc(l.nome)}${chip}${ic}</td>${d.anos.map(cel).join("")}</tr>`;
   }).join("");
-  return `<div class="card"><h2>DRE</h2>
+  return `<div class="card">
     
     ${(d.avisos || []).length ? `<div class="avisos" style="margin:0 0 12px"><strong>Atenção</strong><ul>${d.avisos.map((a) => `<li>${esc(a)}</li>`).join("")}</ul></div>` : ""}
     <div class="scroll"><table class="cult-tabela" style="width:auto"><thead><tr><th>Linha</th>${d.anos.map((y) => `<th>${y}</th>`).join("")}</tr></thead><tbody>${linhas}</tbody></table></div>

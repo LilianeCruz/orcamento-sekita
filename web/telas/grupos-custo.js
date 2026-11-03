@@ -12,9 +12,7 @@ function htmlGruposCusto() {
   return `<div class="card"><h2>Novo grupo de custos</h2>
       <div class="cab"><label>Nome do grupo<input id="ng-nome" style="width:320px" placeholder="Ex.: Insumos, Mão de obra, Administrativo"></label>
         <label>Classificação<select id="ng-class"><option value="">— escolha —</option>${opcoes("")}</select></label>
-        <button class="prim" id="btn-add-grupo">Adicionar grupo</button></div>
-      <p class="dim"><strong>Custo direto:</strong> pode ser atribuído diretamente a um produto ou atividade (por exemplo, insumos e mão de obra da lavoura).
-      <strong>Custo indireto:</strong> não é identificável a um produto e precisa de rateio (por exemplo, administração).</p></div>
+        <button class="prim" id="btn-add-grupo">Adicionar grupo</button></div></div>
     <div class="card"><div class="linha"><h2 style="margin:0">Grupos cadastrados</h2>
       <span class="dim">${grupos.length ? `${nDireto} direto(s) · ${nIndireto} indireto(s)` : ""}</span></div>
       <div class="scroll"><table class="cult-tabela"><thead><tr><th>Grupo</th><th>Classificação</th><th></th><th></th></tr></thead>

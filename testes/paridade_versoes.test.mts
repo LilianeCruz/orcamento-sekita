@@ -32,6 +32,7 @@ describe.skipIf(!BANCO)("paridade Python × TypeScript: versões e produtos", ()
     await culturas.atualizarCultura(bd, res.cultura, { nome: "ZZ Teste 2", grupo: "Hortifruti", unidade: "kg", embalagem: "", qtd_por_embalagem: 0, ativa: true, receita_tipo: "operacional", estoque_destino: "produto" }, "t@x.com");
     const lista = (await culturas.listarCulturas(bd)).culturas;
     await culturas.excluirCultura(bd, res.cultura, "t@x.com");
+    await versoes.excluirVersao(bd, res.copia1, "t@x.com");
 
     // ids devolvidos e lista de produtos iguais
     const { lista: listaPy, ...ids } = ref.resultados;

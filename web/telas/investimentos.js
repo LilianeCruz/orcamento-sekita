@@ -206,8 +206,7 @@ function htmlTiposInvestimento(d, dis, solo) {
   return `<div class="inv-barra">${solo ? "<span></span>" : `<button class="sec" id="btn-inv-voltar">← Voltar às premissas de investimento</button>`}
       ${f ? "" : `<button class="prim" id="btn-inv-novo">+ Novo tipo</button>`}</div>
     ${f ? htmlFormTipoInv(d, edit, solo) : ""}
-    <div class="card"><h2>Tipos de investimento</h2>
-    <p class="dim">Cada tipo vincula uma <strong>conta do ativo do balanço</strong>, tem uma classificação e é <strong>investimento</strong> (aumenta a conta) ou <strong>desinvestimento</strong> (reduz a conta).${solo ? "" : " Marque <strong>Adicionar</strong> para o tipo entrar no orçamento."}</p>${lista}</div>`;
+    <div class="card">${solo ? "" : `<p class="dim">Marque <strong>Adicionar</strong> para o tipo entrar no orçamento.</p>`}${lista}</div>`;
 }
 
 function htmlFormTipoInv(d, t, solo) {

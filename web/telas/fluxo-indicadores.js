@@ -20,7 +20,7 @@ function htmlFluxo() {
     return `${aviso}<div class="card"><h2>Fluxo de caixa</h2><p class="dim">O fluxo de caixa usa as contas do balanço. Importe a estrutura do Fechamento Contábil na tela <a href="#" data-modulo="dre">DRE</a> (botão "Importar do Fechamento Contábil").</p></div>`;
   }
   const avisos = d.avisos.length ? `<div class="card"><strong>Atenção</strong><ul>${d.avisos.map((a) => `<li>${esc(a)}</li>`).join("")}</ul></div>` : "";
-  const corpo = `<div class="card"><h2>Fluxo de caixa indireto</h2>${tabelaSecoes(d.anos, d.indireto)}</div>`;       // só o indireto; o caixa e a dívida de giro ficam em Premissas de dívidas
+  const corpo = `<div class="card">${tabelaSecoes(d.anos, d.indireto)}</div>`;       // só o indireto; o caixa e a dívida de giro ficam em Premissas de dívidas
   return `${aviso}${avisos}${corpo}`;
 }
 

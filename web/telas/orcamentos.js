@@ -24,7 +24,8 @@ function htmlOrcamentos() {
         ${aprovado ? "" : btnAcao(`data-orc-editar="${v.id}"`, "Editar nome e período", "editar")}
         ${btnAcao(`data-orc-reprojetar="${v.id}"`, "Criar Reprojetado", "copiar")}
         ${btnAcao(`data-orc-imprimir="${v.id}"`, "Imprimir orçamento", "impressora")}
-        ${aprovado ? "" : btnAcao(`data-orc-aprovar="${v.id}"`, "Aprovar e travar", "ok", " ok")}</td></tr>`;
+        ${aprovado ? "" : btnAcao(`data-orc-aprovar="${v.id}"`, "Aprovar e travar", "ok", " ok")}
+        ${aprovado ? "" : btnLixo(`data-orc-excluir="${v.id}"`, "Excluir orçamento")}</td></tr>`;
   }).join("");
   return `<div class="card">${cabecaCartaoGrande("orcamento", "Orçamentos", "", `${sel ? `<button class="link" id="btn-orc-cancelar-cmp">Cancelar</button>` : ""}
       ${lista.length > 1 ? (sel && sel.length ? `<button class="prim" id="btn-orc-imprimir" ${sel.length < 2 ? "disabled" : ""}>${icone("baixar", 16)} Imprimir</button>` : `<button class="sec" id="btn-orc-comparar">${icone("trocas", 16)} ${sel ? "Escolha os orçamentos" : "Comparar orçamentos"}</button>`) : ""}
@@ -49,7 +50,13 @@ document.querySelector("#conteudo").addEventListener("click", (e) => {
     else if (t.id === "btn-orc-cancelar-cmp") { estado.orcSel = null; desenhar(); }
     else if (t.id === "btn-orc-imprimir") await abrirImprimirComparacao(estado.orcSel);
     else if (t.dataset.orcImprimir) await abrirImprimirOrcamento(Number(t.dataset.orcImprimir));
-    else if (t.dataset.orcEditar) abrirEditarOrcamento(estado.versoes.find((x) => x.id === Number(t.dataset.orcEditar)));
+    else if (t.dataset.orcExcluir) {
+      const v = estado.versoes.find((x) => x.id === Number(t.dataset.orcExcluir));
+      if (!await dialogo({ titulo: "Excluir orçamento?", texto: `"${v.nome}" e todos os dados dele serão apagados. Isso não pode ser desfeito.`, confirmar: "Excluir" })) return;
+      await api("DELETE", `/api/versoes/${v.id}`);
+      await recarregar();
+      mostrar("Orçamento excluído.", true);
+    } else if (t.dataset.orcEditar) abrirEditarOrcamento(estado.versoes.find((x) => x.id === Number(t.dataset.orcEditar)));
     else if (t.dataset.orcAbrir) {
       estado.vid = Number(t.dataset.orcAbrir); await recarregar();
       mostrar("Orçamento aberto.", true);

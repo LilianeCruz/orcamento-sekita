@@ -91,8 +91,9 @@ export async function copiarVersao(bd: Bd, origemId: number, tipo: string, nome:
   return novo;
 }
 
-// Avisos que impedem aprovar (hoje só os de Arrendamentos). O módulo de Arrendamentos ainda não foi portado: quando for, ele troca esta função.
-export const avisosParaAprovar: { fn: (bd: Bd, vid: number) => Promise<string[]> } = { fn: async () => [] };
+// Avisos que impedem aprovar: os do cálculo de Arrendamentos
+import { calcularArrendamentos } from "./arrendamentos.mts";
+const avisosParaAprovar = { fn: async (bd: Bd, vid: number) => (await calcularArrendamentos(bd, vid)).avisos };
 
 export async function aprovar(bd: Bd, vid: number, autor: string): Promise<void> {
   const v = await versaoEditavel(bd, vid);
@@ -119,4 +120,20 @@ export async function alterarPeriodo(bd: Bd, vid: number, nome: string, anoInici
   validarHorizonte(horizonte);
   await bd.q("UPDATE versoes SET nome=?, ano_base=?, horizonte=?, data_inicio=NULL, data_fim=NULL WHERE id=?", [n, anoInicial, horizonte, vid]);
   await auditar(bd, autor, vid, "alterar_periodo", `${v.ano_base}+${v.horizonte} -> ${anoInicial}+${horizonte}`);
+}
+
+// Apaga o orçamento e tudo o que é dele. Aprovado (travado) não pode ser excluído.
+export async function excluirVersao(bd: Bd, vid: number, autor: string): Promise<void> {
+  const v = await versaoEditavel(bd, vid);
+  await bd.q("UPDATE versoes SET origem_id=NULL WHERE origem_id=?", [vid]);
+  // tabelas que têm versao_id, das mais novas para as mais antigas (as que dependem de outras são apagadas primeiro)
+  const tabelas = await bd.q<{ relname: string }>(
+    "SELECT c.relname FROM pg_class c JOIN information_schema.columns k ON k.table_name=c.relname AND k.table_schema='public' AND k.column_name='versao_id' " +
+    "WHERE c.relkind='r' AND c.relnamespace='public'::regnamespace ORDER BY c.oid DESC");
+  for (const { relname } of tabelas) {
+    if (relname === "versoes" || relname === "auditoria") continue;
+    await bd.q(`DELETE FROM ${relname} WHERE versao_id=?`, [vid]);
+  }
+  await bd.q("DELETE FROM versoes WHERE id=?", [vid]);
+  await auditar(bd, autor, vid, "excluir", v.nome);
 }

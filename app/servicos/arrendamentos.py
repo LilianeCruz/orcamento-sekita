@@ -210,6 +210,21 @@ def aprovar(con: sqlite3.Connection, vid: int, autor: str) -> None:
     auditar(con, autor, vid, "aprovar", v["nome"])
 
 
+def excluir_versao(con: sqlite3.Connection, vid: int, autor: str) -> None:
+    """Apaga o orçamento e tudo o que é dele. Aprovado (travado) não pode ser excluído."""
+    v = versao_editavel(con, vid)
+    con.execute("PRAGMA defer_foreign_keys = ON")
+    con.execute("UPDATE versoes SET origem_id=NULL WHERE origem_id=?", (vid,))
+    tabelas = [r["name"] for r in con.execute("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'")]
+    for t in tabelas:
+        if t in ("versoes", "auditoria"):
+            continue
+        if any(c["name"] == "versao_id" for c in con.execute(f'PRAGMA table_info("{t}")')):
+            con.execute(f'DELETE FROM "{t}" WHERE versao_id=?', (vid,))
+    con.execute("DELETE FROM versoes WHERE id=?", (vid,))
+    auditar(con, autor, vid, "excluir", v["nome"])
+
+
 # ---------------------------------------------------------------- cadastro
 def _validar_fazenda(con: sqlite3.Connection, d: dict) -> Optional[int]:
     """Valida e devolve o produto de pagamento (None quando não se aplica)."""
