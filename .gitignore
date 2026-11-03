@@ -1,0 +1,11 @@
+.env
+node_modules/
+.netlify/
+.venv/
+.pytest_cache/
+.claude/
+__pycache__/
+*.db
+*.db-shm
+*.db-wal
+.DS_Store

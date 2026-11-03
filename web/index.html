@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Orçamento Sekita</title>
+<link rel="stylesheet" href="/web/estilo.css">
+</head>
+<body>
+<button id="sb-toggle" class="sb-toggle" title="Recolher menu" aria-label="Recolher menu" aria-expanded="true"></button>
+<aside id="sidebar">
+  <a href="#" data-modulo="inicio" class="sb-logo" title="Início"><img src="/web/assets/logo-sekita-claro.png" alt="Sekita"></a>
+  <button id="btn-novo-topo" class="sb-novo" title="Novo orçamento"><span class="mais">＋</span><span class="rot">Novo orçamento</span></button>
+  <nav id="nav-modulos" aria-label="Navegação principal"></nav>
+</aside>
+
+<div class="conteudo-pagina">
+<div class="barra-pagina" id="barra-pagina" hidden>
+  <div class="cabeca-titulo">
+    <div id="breadcrumb" class="breadcrumb"></div>
+  </div>
+  <div class="versao-bar">
+    <label class="sel-versao"><span class="rot">Versão:</span>
+      <span class="sel-caixa"><svg class="ico" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg><select id="sel-versao"></select></span>
+    </label>
+    <span id="badge-status" class="badge"></span>
+    <span id="status-salvo" class="status-salvo"></span>
+    <button class="sec peq" id="btn-sair" title="Sair do sistema">Sair</button>
+  </div>
+</div>
+
+<div id="msg" class="msg" hidden></div>
+<div id="avisos" class="avisos" hidden></div>
+
+<nav class="abas" id="abas-arr">
+  <button data-aba="cadastro" class="ativa">Cadastro</button>
+  <button data-aba="resumo">Resumo e fluxo mensal</button>
+  <button data-aba="comparar">Comparar versões</button>
+</nav>
+
+<main id="conteudo"></main>
+</div>
+
+<script src="/web/auth.js"></script>
+<script src="/web/visual.js"></script>
+<script src="/web/telas/culturas.js"></script>
+<script src="/web/telas/areas-premissas-orcamentarias.js"></script>
+<script src="/web/telas/produtividade.js"></script>
+<script src="/web/telas/precos.js"></script>
+<script src="/web/telas/dividas.js"></script>
+<script src="/web/telas/grupos-custo.js"></script>
+<script src="/web/telas/custos-variaveis.js"></script>
+<script src="/web/telas/premissas-culturas.js"></script>
+<script src="/web/telas/resultado.js"></script>
+<script src="/web/telas/dre.js"></script>
+<script src="/web/telas/anotacoes.js"></script>
+<script src="/web/telas/dre-padrao.js"></script>
+<script src="/web/telas/cadastros.js"></script>
+<script src="/web/telas/orcamentos.js"></script>
+<script src="/web/telas/comparar.js"></script>
+<script src="/web/telas/premissas-demonstrativos.js"></script>
+<script src="/web/telas/balanco.js"></script>
+<script src="/web/telas/pecuaria.js"></script>
+<script src="/web/telas/capital-giro.js"></script>
+<script src="/web/telas/transportadora.js"></script>
+<script src="/web/telas/realizado.js"></script>
+<script src="/web/telas/investimentos.js"></script>
+<script src="/web/telas/captacoes.js"></script>
+<script src="/web/telas/patrimonio.js"></script>
+<script src="/web/telas/fluxo-indicadores.js"></script>
+<script src="/web/app.js"></script>
+</body>
+</html>

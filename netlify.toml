@@ -1,0 +1,18 @@
+[build]
+  publish = "web"
+  functions = "netlify/functions"
+
+[functions]
+  node_bundler = "esbuild"
+
+# a tela chama /api/...; a função única "api" atende tudo
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/api/:splat"
+  status = 200
+
+# a tela usa caminhos /web/...; a pasta publicada já é a "web"
+[[redirects]]
+  from = "/web/*"
+  to = "/:splat"
+  status = 200

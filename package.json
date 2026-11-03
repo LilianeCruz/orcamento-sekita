@@ -1,0 +1,19 @@
+{
+  "name": "orcamento-sekita",
+  "private": true,
+  "type": "module",
+  "description": "Orçamento Sekita na nuvem: tela no Netlify, cálculo em funções TypeScript, banco e login no Supabase.",
+  "scripts": {
+    "tipos": "tsc --noEmit",
+    "dev": "netlify dev"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.45.0",
+    "postgres": "^3.4.4"
+  },
+  "devDependencies": {
+    "@netlify/functions": "^2.8.0",
+    "@types/node": "^22.0.0",
+    "typescript": "^5.5.0"
+  }
+}
