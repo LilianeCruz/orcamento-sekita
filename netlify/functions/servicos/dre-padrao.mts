@@ -14,6 +14,7 @@ const BASES: Record<string, [string, string]> = { RL: ["DS018", "Receita líquid
 const LINHAS: [string, string | null, number][] = [["DS032", "CPV", -1], ["DS033", null, 1], ["DS034", null, 1], ["DS035", null, 1], ["DS036", "CPV", -1], ["DS038", "RL", -1], ["DS039", "RL", -1],
   ["DS040", "RL", -1], ["DS041", "RB", -1], ["DS042", "CPV", -1], ["DS043", "CPV", -1], ["DS052", null, 1], ["DS055", null, 0], ["DS056", null, 0], ["DS057", null, 0], ["DS060", "RL", -1]];
 const CODIGOS = LINHAS.map((l) => l[0]);
+export const LINHAS_BASE: Record<string, string | null> = Object.fromEntries(LINHAS.map(([c, b]) => [c, b]));          // conta -> base do percentual (null = valor)
 export const ARRENDAMENTO = "DS032";
 const info = (cod: string) => { const l = LINHAS.find((x) => x[0] === cod)!; return { base: l[1], sinal: l[2] }; };
 

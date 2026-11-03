@@ -1,7 +1,7 @@
 import { PGlite } from "@electric-sql/pglite";
 import { citext } from "@electric-sql/pglite/contrib/citext";
 import { readFileSync } from "node:fs";
-import { numerar, normalizar, limparParams, type Bd } from "./bd.mts";
+import { numerar, normalizar, limparParams, comCache, type Bd } from "./bd.mts";
 
 // Postgres em memória para os testes: carrega o mesmo esquema do Supabase (supabase/migrations/*.sql)
 export async function bdTeste(): Promise<{ bd: Bd; pg: PGlite }> {
@@ -10,7 +10,7 @@ export async function bdTeste(): Promise<{ bd: Bd; pg: PGlite }> {
     await pg.exec(readFileSync(new URL(`../../../supabase/migrations/${arq}`, import.meta.url), "utf8"));
   }
   const adaptar = (c: any): Bd => ({
-    q: async (texto, params) => normalizar((await c.query(numerar(texto), limparParams(params))).rows),
+    q: comCache(async (texto, params) => normalizar((await c.query(numerar(texto), limparParams(params))).rows)) as Bd["q"],
     tx: (fn) => c.transaction((t: any) => fn(adaptar(t))),
   });
   return { bd: adaptar(pg), pg };

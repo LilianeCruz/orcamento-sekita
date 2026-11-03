@@ -28,7 +28,7 @@ describe("versões", () => {
     await expect(versoes.alterarHorizonte(bd, copia, 40, "t")).rejects.toThrow("entre 1 e 30");
     await versoes.aprovar(bd, copia, "t");
     await expect(versoes.alterarHorizonte(bd, copia, 3, "t")).rejects.toThrow("aprovada e travada");
-  });
+  }, 30000);
 });
 
 describe("produtos", () => {

@@ -1,11 +1,11 @@
 import postgres from "postgres";
-import { numerar, normalizar, limparParams, type Bd } from "./bd.mts";
+import { numerar, normalizar, limparParams, comCache, type Bd } from "./bd.mts";
 
 type Sql = ReturnType<typeof postgres>;
 
 function adaptar(sql: Sql): Bd {
   return {
-    q: async (texto, params) => normalizar(await sql.unsafe(numerar(texto), limparParams(params) as any[])),
+    q: comCache(async (texto, params) => normalizar(await sql.unsafe(numerar(texto), limparParams(params) as any[]))) as Bd["q"],
     tx: (fn) => (sql as any).begin((t: Sql) => fn(adaptar(t))),
   };
 }

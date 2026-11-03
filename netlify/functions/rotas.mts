@@ -28,6 +28,9 @@ import * as pat from "./servicos/patrimonio.mts";
 import * as cap from "./servicos/captacoes.mts";
 import * as div from "./servicos/dividas.mts";
 import * as dre from "./servicos/dre.mts";
+import * as demo from "./servicos/demonstrativos.mts";
+import * as orcreal from "./servicos/orcado-realizado.mts";
+import * as comparacao from "./servicos/comparacao.mts";
 
 export const rotas = new Roteador();
 const r = rotas;
@@ -76,6 +79,7 @@ r.delete("/grupos-custo/:gid", async ({ bd, usuario, params }) => { await grupos
 
 // ---- início e anotações
 r.get("/versoes/:vid/inicio", ({ bd, params }) => inicio.lerInicio(bd, num(params.vid)));
+r.get("/versoes/:vid/anotacoes/todas", ({ bd, params }) => notas.listarTodas(bd, num(params.vid)));
 r.get("/versoes/:vid/anotacoes", ({ bd, params, consulta }) => notas.listarAnotacoes(bd, num(params.vid), consulta.get("tela") || ""));
 r.put("/versoes/:vid/anotacoes", ({ bd, usuario, params, corpo }) => notas.salvarAnotacao(bd, num(params.vid), corpo.tela, corpo.chave, corpo.cor ?? "", corpo.comentario ?? "", usuario.email, corpo.valor ?? null));
 r.post("/versoes/:vid/anotacoes/validar", ({ bd, usuario, params, corpo }) => notas.validarAnotacao(bd, num(params.vid), corpo.tela, corpo.chave, !!corpo.validado, usuario.email));
@@ -270,3 +274,20 @@ r.post("/dre/importar-padrao", ({ bd, usuario }) => dre.importarArquivoPadrao(bd
 r.get("/dre/arquivo-padrao", () => ({ arquivo: dre.arquivoPadrao(), existe: dre.arquivoPadraoExiste() }));
 r.get("/versoes/:vid/dre", ({ bd, params }) => dre.ler(bd, num(params.vid)));
 r.get("/comparar-dre", ({ bd, consulta }) => dre.comparar(bd, num(consulta.get("a")!), num(consulta.get("b")!)));
+
+// ---- fluxo de caixa, usos e fontes, indicadores
+r.get("/versoes/:vid/fluxo-caixa", async ({ bd, params }) => {
+  const p = await fluxo.projetar(bd, num(params.vid));                                      // o caixa é calculado uma vez e serve para o cálculo e para os demonstrativos
+  const { estrutura: _ignorar, ...demonstrativos } = await demo.lerFluxo(bd, num(params.vid), p);
+  return { ...(await fluxo.ler(bd, num(params.vid), p)), ...demonstrativos };
+});
+r.get("/versoes/:vid/usos-fontes", ({ bd, params }) => demo.usosFontes(bd, num(params.vid)));
+r.get("/versoes/:vid/indicadores", ({ bd, params }) => demo.indicadores(bd, num(params.vid)));
+r.put("/versoes/:vid/indicadores/:indicador/:ano", async ({ bd, usuario, params, corpo }) => { await demo.salvarMeta(bd, num(params.vid), params.indicador, num(params.ano), corpo.valor, usuario.email); return { ok: true }; });
+r.post("/versoes/:vid/indicadores/:indicador/replicar", async ({ bd, usuario, params, corpo }) => ({ anos_alterados: await demo.replicarMeta(bd, num(params.vid), params.indicador, corpo.ano, usuario.email) }));
+
+// ---- orçado × realizado, comparação e impressão
+r.get("/realizado/comparativo", ({ bd, consulta }) => orcreal.comparar(bd, num(consulta.get("versao_id")!), num(consulta.get("ano")!)));
+r.get("/comparacao/itens", () => ({ itens: comparacao.ITENS }));
+r.post("/versoes/:vid/impressao", ({ bd, params, corpo }) => comparacao.imprimir(bd, num(params.vid), corpo.itens));
+r.post("/comparacao", ({ bd, usuario, corpo }) => comparacao.comparar(bd, corpo.base, corpo.outros, corpo.ano, corpo.itens, corpo.impactos ?? true, usuario.email));

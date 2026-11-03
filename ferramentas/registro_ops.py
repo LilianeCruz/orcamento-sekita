@@ -68,6 +68,7 @@ def registro():
     })
     R.update(_realizado())
     R.update(_fase4())
+    R.update(_fase5())
     return R
 
 
@@ -140,4 +141,15 @@ def _fase4():
         "ler.fluxo_motor": lambda c, v: fluxo.ler(c, v), "ler.projetar": projetar,
         "transp.salvar": lambda c, v, campo, ano, val: transp.salvar(c, v, campo, ano, val, A), "transp.replicar": lambda c, v, campo, ano: transp.replicar(c, v, campo, ano, A),
         "transp.replicar_todos": lambda c, v, ano: transp.replicar_todos(c, v, ano, A), "ler.transportadora": lambda c, v: transp.ler(c, v),
+    }
+
+
+def _fase5():
+    from app.servicos import demonstrativos as demo, orcado_realizado as orc, comparacao as cmp, anotacoes as notas, inicio
+    return {
+        "demo.salvar_meta": lambda c, v, ind, ano, val: demo.salvar_meta(c, v, ind, ano, val, A), "demo.replicar_meta": lambda c, v, ind, ano: demo.replicar_meta(c, v, ind, ano, A),
+        "ler.fluxo_dem": lambda c, v: demo.ler_fluxo(c, v), "ler.usos_fontes": lambda c, v: demo.usos_fontes(c, v), "ler.indicadores": lambda c, v: demo.indicadores(c, v),
+        "ler.orcreal": lambda c, v, ano: orc.comparar(c, v, ano), "ler.inicio": lambda c, v: inicio.ler(c, v), "ler.notas_todas": lambda c, v: notas.listar_todas(c, v),
+        "cmp.comparar": lambda c, base, outros, ano, itens, imp=True: cmp.comparar(c, base, outros, ano, itens, imp, A), "cmp.imprimir": lambda c, v, itens: cmp.imprimir(c, v, itens),
+        "cmp.metricas": lambda c, v, ano: cmp.metricas(c, v, ano), "cmp.itens": lambda c: cmp.ITENS,
     }

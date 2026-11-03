@@ -26,6 +26,10 @@ import * as dre from "../netlify/functions/servicos/dre.mts";
 import * as bal from "../netlify/functions/servicos/balanco.mts";
 import * as pat from "../netlify/functions/servicos/patrimonio.mts";
 import * as fluxo from "../netlify/functions/servicos/fluxo.mts";
+import * as demo from "../netlify/functions/servicos/demonstrativos.mts";
+import * as orcreal from "../netlify/functions/servicos/orcado-realizado.mts";
+import * as comparacao from "../netlify/functions/servicos/comparacao.mts";
+import { lerInicio } from "../netlify/functions/servicos/inicio.mts";
 import * as transp from "../netlify/functions/servicos/transportadora.mts";
 
 const A = "t@x.com";
@@ -140,4 +144,12 @@ Object.assign(registro, {
   "transp.salvar": (bd, v, campo, ano, val) => nada(transp.salvarTransportadora(bd, v, campo, ano, val, A)), "transp.replicar": (bd, v, campo, ano) => transp.replicarTransportadora(bd, v, campo, ano, A),
   "transp.replicar_todos": (bd, v, ano) => transp.replicarTodosTransportadora(bd, v, ano, A), "ler.transportadora": (bd, v) => transp.lerTransportadora(bd, v),
   "ler.projetar": async (bd, v) => { const p = await fluxo.projetar(bd, v); return Object.fromEntries(["ativo", "caixa", "divida", "juros_auto", "variacao", "minimo", "linhas", "total", "avisos"].map((k) => [k, p[k] ?? null])); },
+});
+
+Object.assign(registro, {
+  "demo.salvar_meta": (bd, v, ind, ano, val) => nada(demo.salvarMeta(bd, v, ind, ano, val, A)), "demo.replicar_meta": (bd, v, ind, ano) => demo.replicarMeta(bd, v, ind, ano, A),
+  "ler.fluxo_dem": (bd, v) => demo.lerFluxo(bd, v), "ler.usos_fontes": (bd, v) => demo.usosFontes(bd, v), "ler.indicadores": (bd, v) => demo.indicadores(bd, v),
+  "ler.orcreal": (bd, v, ano) => orcreal.comparar(bd, v, ano), "ler.inicio": (bd, v) => lerInicio(bd, v), "ler.notas_todas": (bd, v) => notas.listarTodas(bd, v),
+  "cmp.comparar": (bd, base, outros, ano, itens, imp = true) => comparacao.comparar(bd, base, outros, ano, itens, imp, A), "cmp.imprimir": (bd, v, itens) => comparacao.imprimir(bd, v, itens),
+  "cmp.metricas": (bd, v, ano) => comparacao.metricas(bd, v, ano), "cmp.itens": async () => comparacao.ITENS,
 });

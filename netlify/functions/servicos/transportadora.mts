@@ -14,7 +14,7 @@ const GRUPOS: [string, [string, string, string][]][] = [
   ["Custos fixos", [["salario_fixo", "Salário fixo + encargos", "R$/km"], ["ipva", "IPVA", "R$/km"], ["rastreamento", "Rastreamento de veículos", "R$/km"], ["seguro", "Seguro de veículos", "R$/km"]]],
   ["Despesas", [["desp_indireto", "Despesa / custo indireto", "R$/km"], ["moi", "M.O.I", "R$/km"]]],
 ];
-const CAMPOS = Object.fromEntries(GRUPOS.flatMap(([g, ls]) => ls.map(([c, nome, un]) => [c, [nome, un, g]])));
+export const CAMPOS = Object.fromEntries(GRUPOS.flatMap(([g, ls]) => ls.map(([c, nome, un]) => [c, [nome, un, g]])));
 const VARIAVEIS = GRUPOS[1][1].map((x) => x[0]), FIXOS = GRUPOS[2][1].map((x) => x[0]), DESPESAS = GRUPOS[3][1].map((x) => x[0]);
 type Valores = Record<string, Record<number, number>>;
 

@@ -46,6 +46,7 @@ describe.skipIf(!BANCO)("paridade Python × TypeScript: versões e produtos", ()
       // colunas antigas que só existem no banco real (sem uso no código) ficam de fora
       const noPg = (await bd.q<{ column_name: string }>("SELECT column_name FROM information_schema.columns WHERE table_schema='public' AND table_name=?", [tabela])).map((x) => x.column_name);
       const cols = t.colunas.filter((c) => !TEMPO.includes(c) && noPg.includes(c));
+      if (!cols.length) continue;
       const norm = (l: any) => JSON.stringify(cols.map((c) => { const v = l[c]; return typeof v === "number" ? Math.round(v * 1e9) / 1e9 : v === undefined ? null : v; }));
       const esperado = t.linhas.map((l) => norm(Object.fromEntries(t.colunas.map((c, i) => [c, l[i]])))).sort();
       const obtido = (await bd.q(`SELECT ${cols.join(", ")} FROM ${tabela}`)).map((l) => norm(l)).sort();

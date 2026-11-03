@@ -1,6 +1,7 @@
 // Tela inicial: andamento do preenchimento das premissas, próximos passos e última alteração. Porte de app/servicos/inicio.py.
 import type { Bd } from "../lib/bd.mts";
 import { obterVersao } from "./base.mts";
+import { listarTodas } from "./anotacoes.mts";
 
 const V = "versao_id=?";
 // [grupo, módulo do menu, [[título do passo, detalhe, módulo, consulta que retorna >0 quando está feito]]]
@@ -38,11 +39,11 @@ const ACOES: [string, string, string][] = [
   ["anota", "Anotações", "anotacoes"], ["aprovar", "Orçamentos", "orcamentos"],
 ];
 
-// Quantas anotações há e quantas estão pendentes. "Com valor alterado" depende do cálculo atual dos demonstrativos (portado nas fases seguintes): até lá fica em 0.
+// Quantas anotações há e quantas estão pendentes; "com valor alterado" compara o número anotado com o cálculo de hoje dos demonstrativos.
 async function resumoAnotacoes(bd: Bd, vid: number) {
-  const [t] = await bd.q("SELECT COUNT(*) AS total, COALESCE(SUM(CASE WHEN validado=0 THEN 1 ELSE 0 END),0) AS pendentes, " +
-    "COALESCE(SUM(CASE WHEN validado=0 AND cor='vermelho' THEN 1 ELSE 0 END),0) AS vermelhas FROM anotacoes WHERE versao_id=?", [vid]);
-  return { total: t.total, validadas: t.total - t.pendentes, pendentes: t.pendentes, alteradas: 0, vermelhas: t.vermelhas };
+  const notas = await listarTodas(bd, vid);
+  const pend = notas.filter((n) => !n.validado);
+  return { total: notas.length, validadas: notas.length - pend.length, pendentes: pend.length, alteradas: pend.filter((n) => n.mudou).length, vermelhas: pend.filter((n) => n.cor === "vermelho").length };
 }
 
 export async function lerInicio(bd: Bd, vid: number) {
@@ -53,8 +54,8 @@ export async function lerInicio(bd: Bd, vid: number) {
     const pend: any[] = [];
     for (const [titulo, detalhe, mod, sql] of checks) {
       total++;
-      const [r] = await bd.q<{ n: number }>(`SELECT (${sql.replace(/^SELECT /, "")}) AS n`, Array(sql.split("?").length - 1).fill(vid));
-      if (Number(r.n) > 0) feitos++; else pend.push({ titulo, detalhe, modulo: mod });
+      const [r] = await bd.q(sql, Array(sql.split("?").length - 1).fill(vid));
+      if (Number(Object.values(r)[0]) > 0) feitos++; else pend.push({ titulo, detalhe, modulo: mod });
     }
     grupos.push({ nome, modulo, estado: !pend.length ? "concluido" : pend.length === checks.length ? "nao_iniciado" : "pendencias", pendencias: pend.length });
     passos.push(...pend);

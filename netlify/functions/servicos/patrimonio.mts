@@ -10,11 +10,11 @@ import * as dre from "./dre.mts";
 import * as real from "./realizado.mts";
 
 type Serie = Record<number, number>;
-const CAMPOS: Record<string, [string, string]> = {
+export const CAMPOS: Record<string, [string, string]> = {
   dist_pct: ["Distribuição de lucros — % do lucro líquido do ano", "% do lucro"],
   dist_valor: ["Distribuição de lucros — valor base (mínimo)", "R$ mil"],
 };
-const SALDOS_ALTERAVEIS: Record<string, string> = { capital: "Capital integralizado", ajustes: "Ajustes de avaliação patrimonial" };       // saldo alterado à mão, por ano
+export const SALDOS_ALTERAVEIS: Record<string, string> = { capital: "Capital integralizado", ajustes: "Ajustes de avaliação patrimonial" };       // saldo alterado à mão, por ano
 const CONTA_LUCROS = "SP25", CONTA_CAPITAL = "SP23", CONTA_AJUSTES = "SP24", CONTA_RESULTADO = "SP26";
 const LINHA_LUCRO_LIQUIDO = "DS062";
 
