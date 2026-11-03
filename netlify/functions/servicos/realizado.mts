@@ -30,7 +30,7 @@ export const SALDOS: Record<string, string[]> = {
 const CODIGO_RECEITA_LIQUIDA = "DS018", CODIGO_CPV = "DS020", CODIGO_DEDUCOES = "DS015";
 
 type Linha = [number, string, string, string, number];             // ano, demonstrativo, código, nome, valor (R$)
-const pyStr = (x: any) => (x === null || x === undefined ? "" : String(x));
+const pyStr = (x: any): string => (x === null || x === undefined ? "" : x instanceof Date ? x.toISOString().slice(0, 19).replace("T", " ") : String(x));      // str() do Python (data = "AAAA-MM-DD HH:MM:SS")
 const falso = (x: any) => x === null || x === undefined || x === "" || x === 0;
 
 // ---------------------------------------------------------------- leitura dos arquivos
@@ -112,8 +112,8 @@ interface LinhaBp { codigo: string; nome: string; pai: string; }
 const paiAvo = (c: LinhaBp, estrutura: LinhaBp[]): string | null => { const pai = estrutura.find((x) => x.codigo === c.pai); return pai ? pai.pai : null; };
 
 async function doFechamentoFinanceiro(bd: Bd, wb: Planilha): Promise<[Linha[], string[], Linha[]]> {
-  const bpEstrutura = await bd.q<LinhaBp>("SELECT codigo, nome, pai FROM bp_linhas WHERE ativa=1 ORDER BY ordem, codigo");
-  const dreEstrutura = await bd.q<{ codigo: string; nome: string }>("SELECT codigo, nome FROM dre_linhas WHERE nivel='sintetica' AND ativa=1 ORDER BY ordem, codigo");
+  const bpEstrutura = await bd.q<LinhaBp>("SELECT codigo, nome, pai FROM bp_linhas WHERE ativa=1 ORDER BY ordem, codigo COLLATE \"C\"");
+  const dreEstrutura = await bd.q<{ codigo: string; nome: string }>("SELECT codigo, nome FROM dre_linhas WHERE nivel='sintetica' AND ativa=1 ORDER BY ordem, codigo COLLATE \"C\"");
   if (!bpEstrutura.length || !dreEstrutura.length) throw Invalido("Importe antes a estrutura do Fechamento Contábil na tela DRE (botão 'Importar do Fechamento Contábil'): ela dá os códigos das contas.");
   const hoje = new Date().getFullYear();
   const out: Linha[] = [], avisos: string[] = [], ignorados = new Set<number>(), parcial: Linha[] = [];
@@ -298,8 +298,8 @@ export async function excluirAno(bd: Bd, ano: number, autor: string): Promise<vo
 }
 
 // ---------------------------------------------------------------- consulta
-type Valores = Record<string, Record<string, Record<number, number>>>;
-async function valores(bd: Bd): Promise<Valores> {
+export type Valores = Record<string, Record<string, Record<number, number>>>;
+export async function valores(bd: Bd): Promise<Valores> {
   const d: Valores = { BP: {}, DRE: {} };
   for (const r of await bd.q("SELECT ano, demonstrativo, codigo, valor FROM realizado")) ((d[r.demonstrativo][r.codigo] ??= {})[r.ano] = r.valor);
   return d;
@@ -307,7 +307,7 @@ async function valores(bd: Bd): Promise<Valores> {
 
 // Linhas do demonstrativo na ordem da estrutura importada; contas realizadas fora da estrutura vão no fim.
 async function estrutura(bd: Bd, dem: string, val: Record<string, Record<number, number>>) {
-  const sql = dem === "BP" ? "SELECT codigo, nome, pai, tipo FROM bp_linhas ORDER BY ordem, codigo" : "SELECT codigo, nome, pai, tipo FROM dre_linhas WHERE nivel='sintetica' ORDER BY ordem, codigo";
+  const sql = dem === "BP" ? "SELECT codigo, nome, pai, tipo FROM bp_linhas ORDER BY ordem, codigo COLLATE \"C\"" : "SELECT codigo, nome, pai, tipo FROM dre_linhas WHERE nivel='sintetica' ORDER BY ordem, codigo COLLATE \"C\"";
   const base: { codigo: string; nome: string; pai: string | null; tipo: string }[] = await bd.q(sql);
   const nomes = new Map((await bd.q("SELECT codigo, nome FROM realizado WHERE demonstrativo=? AND nome<>''", [dem])).map((r) => [r.codigo as string, r.nome as string]));
   const conhecidos = new Set(base.map((l) => l.codigo));
@@ -470,7 +470,7 @@ export async function modelo(bd: Bd): Promise<Uint8Array> {
   const ws = wb.addWorksheet("Realizado");
   ws.addRow(["Ano", "Demonstrativo", "Código", "Conta", "Valor"]).font = { bold: true };
   const ano = new Date().getFullYear() - 1;
-  for (const [dem, sql] of [["BP", "SELECT codigo, nome, tipo FROM bp_linhas WHERE ativa=1 ORDER BY ordem, codigo"], ["DRE", "SELECT codigo, nome, tipo FROM dre_linhas WHERE nivel='sintetica' AND ativa=1 ORDER BY ordem, codigo"]])
+  for (const [dem, sql] of [["BP", "SELECT codigo, nome, tipo FROM bp_linhas WHERE ativa=1 ORDER BY ordem, codigo COLLATE \"C\""], ["DRE", "SELECT codigo, nome, tipo FROM dre_linhas WHERE nivel='sintetica' AND ativa=1 ORDER BY ordem, codigo COLLATE \"C\""]])
     for (const r of await bd.q(sql)) if (!String(r.nome).includes("%")) ws.addRow([ano, dem, r.codigo, r.nome, null]);
   ws.getColumn("B").width = 14; ws.getColumn("D").width = 52;
   const ajuda = wb.addWorksheet("Como preencher");

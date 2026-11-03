@@ -16,6 +16,17 @@ import * as rebanho from "../netlify/functions/servicos/rebanho.mts";
 import * as resultado from "../netlify/functions/servicos/resultado.mts";
 import * as real from "../netlify/functions/servicos/realizado.mts";
 import { abrirPlanilha } from "../netlify/functions/lib/xlsx.mts";
+import * as pd from "../netlify/functions/servicos/premissas-dem.mts";
+import * as inv from "../netlify/functions/servicos/investimentos.mts";
+import * as cg from "../netlify/functions/servicos/capital-giro.mts";
+import * as cap from "../netlify/functions/servicos/captacoes.mts";
+import * as div from "../netlify/functions/servicos/dividas.mts";
+import * as dp from "../netlify/functions/servicos/dre-padrao.mts";
+import * as dre from "../netlify/functions/servicos/dre.mts";
+import * as bal from "../netlify/functions/servicos/balanco.mts";
+import * as pat from "../netlify/functions/servicos/patrimonio.mts";
+import * as fluxo from "../netlify/functions/servicos/fluxo.mts";
+import * as transp from "../netlify/functions/servicos/transportadora.mts";
 
 const A = "t@x.com";
 const nada = async (p: Promise<unknown>) => { await p; return null; };
@@ -85,4 +96,48 @@ Object.assign(registro, {
   "real.saldo_inicial": (bd, ano) => real.saldoInicial(bd, ano), "real.valor": (bd, dem, cod, ano) => real.valorRealizado(bd, dem, cod, ano),
   "real.ultimo_ano": (bd) => real.ultimoAno(bd), "real.periodo_do_ano": (bd, ano) => real.periodoDoAno(bd, ano),
   "real.modelo_linhas": async (bd) => { const p = await abrirPlanilha(await real.modelo(bd)); return Object.fromEntries(p.abas.map((a) => [a, p.linhas(a)])); },
+});
+
+Object.assign(registro, {
+  "pd.criar": (bd, nome, dem, conta, sinal, tipo = "valor", base = "", neg = "") => pd.criar(bd, nome, dem, conta, sinal, A, tipo, base, neg),
+  "pd.editar": (bd, pid, nome = null, conta = null, sinal = null, base = null, neg = null) => nada(pd.editar(bd, pid, nome, conta, sinal, A, base, neg)),
+  "pd.excluir": (bd, pid) => nada(pd.excluir(bd, pid, A)), "pd.incluir": (bd, v, pid) => nada(pd.incluir(bd, v, pid, A)), "pd.remover": (bd, v, pid) => nada(pd.remover(bd, v, pid, A)),
+  "pd.salvar": (bd, v, pid, ano, val) => nada(pd.salvarValor(bd, v, pid, ano, val, A)), "pd.replicar": (bd, v, pid, ano) => pd.replicar(bd, v, pid, ano, A),
+  "pd.replicar_todas": (bd, v, ano, dem = null) => pd.replicarTodas(bd, v, ano, A, dem),
+  "pd.contas": (bd, dem) => pd.contas(bd, dem), "pd.bases": (bd, dem) => pd.bases(bd, dem),
+  "inv.criar_classificacao": (bd, nome) => inv.criarClassificacao(bd, nome, A),
+  "inv.criar_tipo": (bd, d, v = null, adicionar = true) => inv.criarTipo(bd, d, A, v, adicionar), "inv.editar_tipo": (bd, tid, d) => nada(inv.editarTipo(bd, tid, d, A)),
+  "inv.excluir_tipo": (bd, tid) => nada(inv.excluirTipo(bd, tid, A)), "inv.incluir": (bd, v, tid) => nada(inv.incluirNaVersao(bd, v, tid, A)), "inv.retirar": (bd, v, tid) => nada(inv.retirarDaVersao(bd, v, tid, A)),
+  "inv.salvar": (bd, v, tid, campo, ano, val) => nada(inv.salvarValor(bd, v, tid, campo, ano, val, A)), "inv.replicar": (bd, v, tid, campo, ano) => inv.replicar(bd, v, tid, campo, ano, A),
+  "inv.replicar_todos": (bd, v, ano) => inv.replicarTodos(bd, v, ano, A),
+  "inv.salvar_depreciacao": (bd, v, chave, ano, val) => nada(inv.salvarDepreciacao(bd, v, chave, ano, val, A)), "inv.voltar_depreciacao": (bd, v, chave) => nada(inv.voltarAoCalculado(bd, v, chave, A)),
+  "cg.atualizar_prazos": (bd, v, anos = null) => cg.atualizarPrazos(bd, v, A, anos), "cg.previa": (bd, v) => cg.previaPrazos(bd, v),
+  "cg.salvar": (bd, v, campo, ano, val) => nada(cg.salvar(bd, v, campo, ano, val, A)), "cg.replicar": (bd, v, campo, ano) => cg.replicar(bd, v, campo, ano, A),
+  "cg.replicar_todos": (bd, v, ano) => cg.replicarTodos(bd, v, ano, A),
+  "cap.criar": (bd, v, d) => cap.criar(bd, v, d, A), "cap.editar": (bd, v, cid, d) => nada(cap.editar(bd, v, cid, d, A)), "cap.excluir": (bd, v, cid) => nada(cap.excluir(bd, v, cid, A)),
+  "cap.salvar_valor": (bd, v, chave, campo, ano, val) => nada(cap.salvarValor(bd, v, chave, campo, ano, val, A)), "cap.voltar": (bd, v, chave) => nada(cap.voltarAoCalculado(bd, v, chave, A)),
+  "cap.salvar_premissa": (bd, v, campo, ano, val) => nada(cap.salvarPremissa(bd, v, campo, ano, val, A)), "cap.replicar_premissa": (bd, v, campo, ano) => cap.replicarPremissa(bd, v, campo, ano, A),
+  "div.importar": (bd, b64, nome, v = null) => div.importar(bd, Buffer.from(b64, "base64"), nome, v, A), "div.importar_padrao": (bd, v = null) => div.importarArquivoPadrao(bd, v, A),
+  "div.vincular": (bd, v, imp) => nada(div.vincular(bd, v, imp, A)),
+  "dp.atualizar": (bd, v, anos = null) => dp.atualizar(bd, v, A, anos), "dp.previa": (bd, v) => dp.previa(bd, v), "dp.salvar": (bd, v, cod, ano, val) => nada(dp.salvar(bd, v, cod, ano, val, A)),
+  "dp.replicar": (bd, v, cod, ano) => dp.replicar(bd, v, cod, ano, A), "dp.replicar_todos": (bd, v, ano) => dp.replicarTodos(bd, v, ano, A),
+  "pat.salvar": (bd, v, campo, ano, val) => nada(pat.salvar(bd, v, campo, ano, val, A)), "pat.voltar": (bd, v, campo) => nada(pat.voltarAoCalculado(bd, v, campo, A)),
+  "pat.replicar": (bd, v, campo, ano) => pat.replicar(bd, v, campo, ano, A), "pat.replicar_todos": (bd, v, ano) => pat.replicarTodos(bd, v, ano, A),
+  "fluxo.salvar_premissa": (bd, v, campo, ano, val) => nada(fluxo.salvarPremissa(bd, v, campo, ano, val, A)), "fluxo.replicar_premissa": (bd, v, campo, ano) => fluxo.replicarPremissa(bd, v, campo, ano, A),
+  "dre.importar_padrao": (bd) => dre.importarArquivoPadrao(bd, A),
+  "dre.importar_estrutura": (bd, b64, nome) => dre.importarEstrutura(bd, Buffer.from(b64, "base64"), nome, A),
+  "ler.premissas_dem": (bd, v) => pd.ler(bd, v), "comparar.premissas_dem": (bd, a, b) => pd.comparar(bd, a, b),
+  "ler.investimentos": (bd, v) => inv.ler(bd, v), "comparar.investimentos": (bd, a, b) => inv.comparar(bd, a, b),
+  "ler.capital_giro": (bd, v) => cg.ler(bd, v), "comparar.capital_giro": (bd, a, b) => cg.comparar(bd, a, b),
+  "ler.captacoes": (bd, v) => cap.ler(bd, v), "comparar.captacoes": (bd, a, b) => cap.comparar(bd, a, b),
+  "ler.dividas": (bd, v, emp = "agro") => div.resumo(bd, v, emp), "ler.dividas_balanco": (bd, v, emp = "agro") => div.balanco(bd, v, emp),
+  "ler.dividas_mensal_por_ano": (bd, v, emp = "agro") => div.mensalPorAno(bd, v, emp), "ler.dividas_mensal": (bd, v, ano, emp = "agro") => div.mensal(bd, v, ano, emp),
+  "ler.dividas_contratos": (bd, v, emp = "agro", ano = null, grupo = null) => div.contratos(bd, v, emp, ano, grupo), "ler.dividas_importacoes": (bd) => div.listarImportacoes(bd),
+  "ler.dre_padrao": (bd, v) => dp.ler(bd, v), "ler.dre": (bd, v) => dre.ler(bd, v), "comparar.dre": (bd, a, b) => dre.comparar(bd, a, b),
+  "ler.balanco": (bd, v) => bal.ler(bd, v), "comparar.balanco": (bd, a, b) => bal.comparar(bd, a, b),
+  "ler.patrimonio": (bd, v) => pat.ler(bd, v), "comparar.patrimonio": (bd, a, b) => pat.comparar(bd, a, b),
+  "ler.fluxo_motor": (bd, v) => fluxo.ler(bd, v),
+  "transp.salvar": (bd, v, campo, ano, val) => nada(transp.salvarTransportadora(bd, v, campo, ano, val, A)), "transp.replicar": (bd, v, campo, ano) => transp.replicarTransportadora(bd, v, campo, ano, A),
+  "transp.replicar_todos": (bd, v, ano) => transp.replicarTodosTransportadora(bd, v, ano, A), "ler.transportadora": (bd, v) => transp.lerTransportadora(bd, v),
+  "ler.projetar": async (bd, v) => { const p = await fluxo.projetar(bd, v); return Object.fromEntries(["ativo", "caixa", "divida", "juros_auto", "variacao", "minimo", "linhas", "total", "avisos"].map((k) => [k, p[k] ?? null])); },
 });

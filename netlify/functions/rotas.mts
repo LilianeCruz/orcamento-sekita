@@ -18,6 +18,16 @@ import * as rebanho from "./servicos/rebanho.mts";
 import * as resultado from "./servicos/resultado.mts";
 import * as transp from "./servicos/transportadora.mts";
 import * as real from "./servicos/realizado.mts";
+import * as cg from "./servicos/capital-giro.mts";
+import * as bal from "./servicos/balanco.mts";
+import * as pdem from "./servicos/premissas-dem.mts";
+import * as inv from "./servicos/investimentos.mts";
+import * as dpad from "./servicos/dre-padrao.mts";
+import * as fluxo from "./servicos/fluxo.mts";
+import * as pat from "./servicos/patrimonio.mts";
+import * as cap from "./servicos/captacoes.mts";
+import * as div from "./servicos/dividas.mts";
+import * as dre from "./servicos/dre.mts";
 
 export const rotas = new Roteador();
 const r = rotas;
@@ -164,3 +174,99 @@ r.put("/realizado/quantidades/:cid", async ({ bd, usuario, params, corpo }) => {
 r.get("/realizado/importacoes", ({ bd }) => real.importacoesComparaveis(bd));
 r.get("/realizado/modelo", async ({ bd }) => new RespostaArquivo(await real.modelo(bd), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "modelo-realizado.xlsx"));
 r.delete("/realizado/:ano", async ({ bd, usuario, params }) => { await real.excluirAno(bd, num(params.ano), usuario.email); return { ok: true }; });
+
+// ---- capital de giro e balanço patrimonial
+r.get("/versoes/:vid/capital-giro", ({ bd, params }) => cg.ler(bd, num(params.vid)));
+r.get("/versoes/:vid/capital-giro/previa-prazos", ({ bd, params }) => cg.previaPrazos(bd, num(params.vid)));
+r.post("/versoes/:vid/capital-giro/atualizar-prazos", ({ bd, usuario, params, corpo }) => cg.atualizarPrazos(bd, num(params.vid), usuario.email, (corpo && corpo.anos) || null));
+r.post("/versoes/:vid/capital-giro/replicar-todos", ({ bd, usuario, params, corpo }) => cg.replicarTodos(bd, num(params.vid), corpo.ano, usuario.email));
+r.put("/versoes/:vid/capital-giro/:campo/:ano", async ({ bd, usuario, params, corpo }) => { await cg.salvar(bd, num(params.vid), params.campo, num(params.ano), corpo.valor, usuario.email); return { ok: true }; });
+r.post("/versoes/:vid/capital-giro/:campo/replicar", async ({ bd, usuario, params, corpo }) => ({ anos_alterados: await cg.replicar(bd, num(params.vid), params.campo, corpo.ano, usuario.email) }));
+r.get("/comparar-capital-giro", ({ bd, consulta }) => cg.comparar(bd, num(consulta.get("a")!), num(consulta.get("b")!)));
+r.get("/versoes/:vid/balanco-patrimonial", ({ bd, params }) => bal.ler(bd, num(params.vid)));
+r.get("/comparar-balanco-patrimonial", ({ bd, consulta }) => bal.comparar(bd, num(consulta.get("a")!), num(consulta.get("b")!)));
+
+// ---- premissas dos demonstrativos (DRE e Balanço)
+r.get("/versoes/:vid/premissas-dem", ({ bd, params }) => pdem.ler(bd, num(params.vid)));
+r.post("/premissas-dem", async ({ bd, usuario, corpo }) => ({ id: await pdem.criar(bd, corpo.nome, corpo.demonstrativo, corpo.conta_codigo ?? "", corpo.sinal ?? 1, usuario.email, corpo.tipo ?? "valor", corpo.base_codigo ?? "", corpo.base_negativa ?? "") }));
+r.put("/premissas-dem/:pid", async ({ bd, usuario, params, corpo }) => { await pdem.editar(bd, num(params.pid), corpo.nome ?? null, corpo.conta_codigo ?? null, corpo.sinal ?? null, usuario.email, corpo.base_codigo ?? null, corpo.base_negativa ?? null); return { ok: true }; });
+r.delete("/premissas-dem/:pid", async ({ bd, usuario, params }) => { await pdem.excluir(bd, num(params.pid), usuario.email); return { ok: true }; });
+r.post("/versoes/:vid/premissas-dem/replicar-todas", ({ bd, usuario, params, corpo }) => pdem.replicarTodas(bd, num(params.vid), corpo.ano, usuario.email, corpo.demonstrativo ?? null));
+r.put("/versoes/:vid/premissas-dem/:pid/:ano", async ({ bd, usuario, params, corpo }) => { await pdem.salvarValor(bd, num(params.vid), num(params.pid), num(params.ano), corpo.valor, usuario.email); return { ok: true }; });
+r.post("/versoes/:vid/premissas-dem/:pid/replicar", async ({ bd, usuario, params, corpo }) => ({ anos_alterados: await pdem.replicar(bd, num(params.vid), num(params.pid), corpo.ano, usuario.email) }));
+r.post("/versoes/:vid/premissas-dem/itens", async ({ bd, usuario, params, corpo }) => { await pdem.incluir(bd, num(params.vid), corpo.premissa_id, usuario.email); return { ok: true }; });
+r.delete("/versoes/:vid/premissas-dem/itens/:pid", async ({ bd, usuario, params }) => { await pdem.remover(bd, num(params.vid), num(params.pid), usuario.email); return { ok: true }; });
+r.get("/comparar-premissas-dem", ({ bd, consulta }) => pdem.comparar(bd, num(consulta.get("a")!), num(consulta.get("b")!)));
+
+// ---- investimentos e desinvestimentos, depreciação
+const tipoInv = (c: any) => ({ nome: c.nome, natureza: c.natureza, conta_codigo: c.conta_codigo, classificacao_id: c.classificacao_id, carrega_saldo: c.carrega_saldo ?? false, ativo: c.ativo ?? true, vida_util: c.vida_util ?? 0, residual_pct: c.residual_pct ?? 0, carencia: c.carencia ?? 0 });
+r.get("/versoes/:vid/investimentos", ({ bd, params }) => inv.ler(bd, num(params.vid)));
+r.post("/investimentos/classificacoes", async ({ bd, usuario, corpo }) => ({ id: await inv.criarClassificacao(bd, corpo.nome, usuario.email) }));
+r.post("/investimentos/tipos", async ({ bd, usuario, corpo }) => ({ id: await inv.criarTipo(bd, tipoInv(corpo), usuario.email, corpo.versao_id ?? null, corpo.adicionar ?? true) }));
+r.put("/investimentos/tipos/:tid", async ({ bd, usuario, params, corpo }) => { await inv.editarTipo(bd, num(params.tid), tipoInv(corpo), usuario.email); return { ok: true }; });
+r.delete("/investimentos/tipos/:tid", async ({ bd, usuario, params }) => { await inv.excluirTipo(bd, num(params.tid), usuario.email); return { ok: true }; });
+r.post("/versoes/:vid/investimentos/replicar-todos", ({ bd, usuario, params, corpo }) => inv.replicarTodos(bd, num(params.vid), corpo.ano, usuario.email));
+r.post("/versoes/:vid/investimentos/:tid/incluir", async ({ bd, usuario, params }) => { await inv.incluirNaVersao(bd, num(params.vid), num(params.tid), usuario.email); return { ok: true }; });
+r.post("/versoes/:vid/investimentos/:tid/retirar", async ({ bd, usuario, params }) => { await inv.retirarDaVersao(bd, num(params.vid), num(params.tid), usuario.email); return { ok: true }; });
+r.put("/versoes/:vid/investimentos/:tid/:campo/:ano", async ({ bd, usuario, params, corpo }) => { await inv.salvarValor(bd, num(params.vid), num(params.tid), params.campo, num(params.ano), corpo.valor, usuario.email); return { ok: true }; });
+r.post("/versoes/:vid/investimentos/:tid/:campo/replicar", async ({ bd, usuario, params, corpo }) => ({ anos_alterados: await inv.replicar(bd, num(params.vid), num(params.tid), params.campo, corpo.ano, usuario.email) }));
+r.put("/versoes/:vid/depreciacao/:chave/:ano", async ({ bd, usuario, params, corpo }) => { await inv.salvarDepreciacao(bd, num(params.vid), params.chave, num(params.ano), corpo.valor, usuario.email); return { ok: true }; });
+r.delete("/versoes/:vid/depreciacao/:chave", async ({ bd, usuario, params }) => { await inv.voltarAoCalculado(bd, num(params.vid), params.chave, usuario.email); return { ok: true }; });
+r.get("/comparar-investimentos", ({ bd, consulta }) => inv.comparar(bd, num(consulta.get("a")!), num(consulta.get("b")!)));
+
+// ---- premissas padronizadas da DRE
+r.get("/versoes/:vid/dre-padrao", ({ bd, params }) => dpad.ler(bd, num(params.vid)));
+r.get("/versoes/:vid/dre-padrao/previa", ({ bd, params }) => dpad.previa(bd, num(params.vid)));
+r.post("/versoes/:vid/dre-padrao/atualizar", ({ bd, usuario, params, corpo }) => dpad.atualizar(bd, num(params.vid), usuario.email, (corpo && corpo.anos) || null));
+r.post("/versoes/:vid/dre-padrao/replicar-todos", ({ bd, usuario, params, corpo }) => dpad.replicarTodos(bd, num(params.vid), corpo.ano, usuario.email));
+r.put("/versoes/:vid/dre-padrao/:codigo/:ano", async ({ bd, usuario, params, corpo }) => { await dpad.salvar(bd, num(params.vid), params.codigo, num(params.ano), corpo.valor, usuario.email); return { ok: true }; });
+r.post("/versoes/:vid/dre-padrao/:codigo/replicar", async ({ bd, usuario, params, corpo }) => ({ anos_alterados: await dpad.replicar(bd, num(params.vid), params.codigo, corpo.ano, usuario.email) }));
+
+// ---- patrimônio líquido
+r.get("/versoes/:vid/patrimonio", ({ bd, params }) => pat.ler(bd, num(params.vid)));
+r.delete("/versoes/:vid/patrimonio/:campo", async ({ bd, usuario, params }) => { await pat.voltarAoCalculado(bd, num(params.vid), params.campo, usuario.email); return { ok: true }; });
+r.post("/versoes/:vid/patrimonio/replicar-todos", ({ bd, usuario, params, corpo }) => pat.replicarTodos(bd, num(params.vid), corpo.ano, usuario.email));
+r.put("/versoes/:vid/patrimonio/:campo/:ano", async ({ bd, usuario, params, corpo }) => { await pat.salvar(bd, num(params.vid), params.campo, num(params.ano), corpo.valor, usuario.email); return { ok: true }; });
+r.post("/versoes/:vid/patrimonio/:campo/replicar", async ({ bd, usuario, params, corpo }) => ({ anos_alterados: await pat.replicar(bd, num(params.vid), params.campo, corpo.ano, usuario.email) }));
+r.get("/comparar-patrimonio", ({ bd, consulta }) => pat.comparar(bd, num(consulta.get("a")!), num(consulta.get("b")!)));
+
+// ---- caixa (taxa da dívida de giro automática)
+r.put("/versoes/:vid/fluxo-caixa/:campo/:ano", async ({ bd, usuario, params, corpo }) => { await fluxo.salvarPremissa(bd, num(params.vid), params.campo, num(params.ano), corpo.valor, usuario.email); return { ok: true }; });
+r.post("/versoes/:vid/fluxo-caixa/:campo/replicar", async ({ bd, usuario, params, corpo }) => ({ anos_alterados: await fluxo.replicarPremissa(bd, num(params.vid), params.campo, corpo.ano, usuario.email) }));
+
+// ---- novas captações e financiamento dos investimentos
+r.get("/versoes/:vid/captacoes", ({ bd, params }) => cap.ler(bd, num(params.vid)));
+const captacaoIn = (c: any) => ({ nome: c.nome, tipo: c.tipo, ano: c.ano, valor: c.valor, taxa: c.taxa ?? 0, prazo: c.prazo ?? 1, carencia: c.carencia ?? 0 });
+r.post("/versoes/:vid/captacoes", async ({ bd, usuario, params, corpo }) => ({ id: await cap.criar(bd, num(params.vid), captacaoIn(corpo), usuario.email) }));
+r.put("/versoes/:vid/captacoes/:cid", async ({ bd, usuario, params, corpo }) => { await cap.editar(bd, num(params.vid), num(params.cid), captacaoIn(corpo), usuario.email); return { ok: true }; });
+r.delete("/versoes/:vid/captacoes/:cid", async ({ bd, usuario, params }) => { await cap.excluir(bd, num(params.vid), num(params.cid), usuario.email); return { ok: true }; });
+r.put("/versoes/:vid/cronograma-captacao/:chave/:campo/:ano", async ({ bd, usuario, params, corpo }) => { await cap.salvarValor(bd, num(params.vid), params.chave, params.campo, num(params.ano), corpo.valor, usuario.email); return { ok: true }; });
+r.delete("/versoes/:vid/cronograma-captacao/:chave", async ({ bd, usuario, params }) => { await cap.voltarAoCalculado(bd, num(params.vid), params.chave, usuario.email); return { ok: true }; });
+r.put("/versoes/:vid/financiamento/:campo/:ano", async ({ bd, usuario, params, corpo }) => { await cap.salvarPremissa(bd, num(params.vid), params.campo, num(params.ano), corpo.valor, usuario.email); return { ok: true }; });
+r.post("/versoes/:vid/financiamento/:campo/replicar", async ({ bd, usuario, params, corpo }) => ({ anos_alterados: await cap.replicarPremissa(bd, num(params.vid), params.campo, corpo.ano, usuario.email) }));
+r.get("/comparar-captacoes", ({ bd, consulta }) => cap.comparar(bd, num(consulta.get("a")!), num(consulta.get("b")!)));
+
+// ---- endividamento (base)
+const vazioParaNulo = (x: string | null) => (x === null || x === "" ? null : x);
+r.get("/dividas/importacoes", async ({ bd }) => ({ importacoes: await div.listarImportacoes(bd), arquivo_padrao: div.arquivoPadrao(), arquivo_padrao_existe: div.arquivoPadraoExiste() }));
+r.post("/dividas/importar", ({ bd, usuario, consulta, bruto }) => {
+  if (!bruto || !bruto.length) throw Invalido("Nenhum arquivo recebido");
+  return div.importar(bd, bruto, consulta.get("arquivo") || "Endividamento alterado.xlsx", inteiro(consulta.get("versao_id")), usuario.email);
+});
+r.post("/dividas/importar-padrao", ({ bd, usuario, consulta }) => div.importarArquivoPadrao(bd, inteiro(consulta.get("versao_id")), usuario.email));
+r.put("/versoes/:vid/divida-importacao", async ({ bd, usuario, params, corpo }) => { await div.vincular(bd, num(params.vid), corpo.importacao_id ?? null, usuario.email); return { ok: true }; });
+r.get("/versoes/:vid/dividas", ({ bd, params, consulta }) => div.resumo(bd, num(params.vid), consulta.get("empresas") ?? "agro"));
+r.get("/versoes/:vid/dividas/balanco", ({ bd, params, consulta }) => div.balanco(bd, num(params.vid), consulta.get("empresas") ?? "agro"));
+r.get("/versoes/:vid/dividas/resumo-mensal", ({ bd, params, consulta }) => div.mensalPorAno(bd, num(params.vid), consulta.get("empresas") ?? "agro"));
+r.get("/versoes/:vid/dividas/contratos", ({ bd, params, consulta }) => div.contratos(bd, num(params.vid), consulta.get("empresas") ?? "agro", inteiro(consulta.get("ano")), vazioParaNulo(consulta.get("grupo"))));
+r.get("/versoes/:vid/dividas/mensal", ({ bd, params, consulta }) => div.mensal(bd, num(params.vid), num(consulta.get("ano")!), consulta.get("empresas") ?? "agro"));
+
+// ---- DRE (estrutura do Fechamento Contábil + valores por versão)
+r.post("/dre/importar", ({ bd, usuario, consulta, bruto }) => {
+  if (!bruto || !bruto.length) throw Invalido("Nenhum arquivo recebido");
+  return dre.importarEstrutura(bd, bruto, consulta.get("arquivo") || "fechamento-contabil.xlsx", usuario.email);
+});
+r.post("/dre/importar-padrao", ({ bd, usuario }) => dre.importarArquivoPadrao(bd, usuario.email));
+r.get("/dre/arquivo-padrao", () => ({ arquivo: dre.arquivoPadrao(), existe: dre.arquivoPadraoExiste() }));
+r.get("/versoes/:vid/dre", ({ bd, params }) => dre.ler(bd, num(params.vid)));
+r.get("/comparar-dre", ({ bd, consulta }) => dre.comparar(bd, num(consulta.get("a")!), num(consulta.get("b")!)));

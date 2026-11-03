@@ -15,9 +15,11 @@ export async function carregarJson(bd: Bd, dados: DadosSqlite): Promise<void> {
       await bd.q(`INSERT INTO ${tabela} SELECT * FROM jsonb_populate_recordset(null::${tabela}, ?::jsonb)`, [JSON.stringify(objetos.slice(i, i + 2000))]);
     }
   }
+  // o contador do SQLite (sqlite_sequence) lembra os ids já usados, mesmo de linhas apagadas: o próximo id continua depois dele
+  const usados = new Map<string, number>((dados.sqlite_sequence?.linhas ?? []).map((l) => [String(l[0]), Number(l[1])]));
   for (const { table_name: tabela, column_name: col } of await bd.q<{ table_name: string; column_name: string }>(
     "SELECT table_name, column_name FROM information_schema.columns WHERE table_schema='public' AND is_identity='YES'")) {
     const [{ s }] = await bd.q<{ s: string }>("SELECT pg_get_serial_sequence(?, ?) AS s", [tabela, col]);
-    await bd.q(`SELECT setval(?, GREATEST((SELECT COALESCE(MAX(${col}), 0) FROM ${tabela}), 1), (SELECT COUNT(*) > 0 FROM ${tabela}))`, [s]);
+    await bd.q(`SELECT setval(?, GREATEST((SELECT COALESCE(MAX(${col}), 0) FROM ${tabela}), ?::int, 1), (SELECT COUNT(*) > 0 FROM ${tabela}) OR ?::int > 0)`, [s, usados.get(tabela) ?? 0, usados.get(tabela) ?? 0]);
   }
 }

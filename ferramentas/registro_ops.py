@@ -67,6 +67,7 @@ def registro():
         "comparar.arrendamentos": lambda c, a, b: arr.comparar(c, a, b),
     })
     R.update(_realizado())
+    R.update(_fase4())
     return R
 
 
@@ -88,4 +89,55 @@ def _realizado():
         "ler.real_produtos": lambda c: real.produtos_venda(c), "ler.real_importacoes": lambda c: real.importacoes_comparaveis(c),
         "real.saldo_inicial": lambda c, ano: real.saldo_inicial(c, ano), "real.valor": lambda c, dem, cod, ano: real.valor_realizado(c, dem, cod, ano),
         "real.ultimo_ano": lambda c: real.ultimo_ano(c), "real.periodo_do_ano": lambda c, ano: real.periodo_do_ano(c, ano), "real.modelo_linhas": modelo_linhas,
+    }
+
+
+def _fase4():
+    import base64
+    from app.servicos import (premissas_dem as pd, investimentos as inv, capital_giro as cg, captacoes as cap, dividas as div, dre_padrao as dp, dre,
+                              balanco as bal, patrimonio as pat, fluxo, transportadora as transp)
+    def projetar(c, v):
+        p = fluxo.projetar(c, v)
+        return {k: p.get(k) for k in ("ativo", "caixa", "divida", "juros_auto", "variacao", "minimo", "linhas", "total", "avisos")}
+    return {
+        "pd.criar": lambda c, nome, dem, conta, sinal, tipo="valor", base="", neg="": pd.criar(c, nome, dem, conta, sinal, A, tipo, base, neg),
+        "pd.editar": lambda c, pid, nome=None, conta=None, sinal=None, base=None, neg=None: pd.editar(c, pid, nome, conta, sinal, A, base, neg),
+        "pd.excluir": lambda c, pid: pd.excluir(c, pid, A), "pd.incluir": lambda c, v, pid: pd.incluir(c, v, pid, A), "pd.remover": lambda c, v, pid: pd.remover(c, v, pid, A),
+        "pd.salvar": lambda c, v, pid, ano, val: pd.salvar_valor(c, v, pid, ano, val, A), "pd.replicar": lambda c, v, pid, ano: pd.replicar(c, v, pid, ano, A),
+        "pd.replicar_todas": lambda c, v, ano, dem=None: pd.replicar_todas(c, v, ano, A, dem),
+        "pd.contas": lambda c, dem: pd.contas(c, dem), "pd.bases": lambda c, dem: pd.bases(c, dem),
+        "inv.criar_classificacao": lambda c, nome: inv.criar_classificacao(c, nome, A),
+        "inv.criar_tipo": lambda c, d, v=None, adicionar=True: inv.criar_tipo(c, d, A, v, adicionar), "inv.editar_tipo": lambda c, tid, d: inv.editar_tipo(c, tid, d, A),
+        "inv.excluir_tipo": lambda c, tid: inv.excluir_tipo(c, tid, A), "inv.incluir": lambda c, v, tid: inv.incluir_na_versao(c, v, tid, A), "inv.retirar": lambda c, v, tid: inv.retirar_da_versao(c, v, tid, A),
+        "inv.salvar": lambda c, v, tid, campo, ano, val: inv.salvar_valor(c, v, tid, campo, ano, val, A), "inv.replicar": lambda c, v, tid, campo, ano: inv.replicar(c, v, tid, campo, ano, A),
+        "inv.replicar_todos": lambda c, v, ano: inv.replicar_todos(c, v, ano, A),
+        "inv.salvar_depreciacao": lambda c, v, chave, ano, val: inv.salvar_depreciacao(c, v, chave, ano, val, A), "inv.voltar_depreciacao": lambda c, v, chave: inv.voltar_ao_calculado(c, v, chave, A),
+        "cg.atualizar_prazos": lambda c, v, anos=None: cg.atualizar_prazos(c, v, A, anos), "cg.previa": lambda c, v: cg.previa_prazos(c, v),
+        "cg.salvar": lambda c, v, campo, ano, val: cg.salvar(c, v, campo, ano, val, A), "cg.replicar": lambda c, v, campo, ano: cg.replicar(c, v, campo, ano, A),
+        "cg.replicar_todos": lambda c, v, ano: cg.replicar_todos(c, v, ano, A),
+        "cap.criar": lambda c, v, d: cap.criar(c, v, d, A), "cap.editar": lambda c, v, cid, d: cap.editar(c, v, cid, d, A), "cap.excluir": lambda c, v, cid: cap.excluir(c, v, cid, A),
+        "cap.salvar_valor": lambda c, v, chave, campo, ano, val: cap.salvar_valor(c, v, chave, campo, ano, val, A), "cap.voltar": lambda c, v, chave: cap.voltar_ao_calculado(c, v, chave, A),
+        "cap.salvar_premissa": lambda c, v, campo, ano, val: cap.salvar_premissa(c, v, campo, ano, val, A), "cap.replicar_premissa": lambda c, v, campo, ano: cap.replicar_premissa(c, v, campo, ano, A),
+        "div.importar": lambda c, b64, nome, v=None: div.importar(c, base64.b64decode(b64), nome, v, A), "div.importar_padrao": lambda c, v=None: div.importar_arquivo_padrao(c, v, A),
+        "div.vincular": lambda c, v, imp: div.vincular(c, v, imp, A),
+        "dp.atualizar": lambda c, v, anos=None: dp.atualizar(c, v, A, anos), "dp.previa": lambda c, v: dp.previa(c, v), "dp.salvar": lambda c, v, cod, ano, val: dp.salvar(c, v, cod, ano, val, A),
+        "dp.replicar": lambda c, v, cod, ano: dp.replicar(c, v, cod, ano, A), "dp.replicar_todos": lambda c, v, ano: dp.replicar_todos(c, v, ano, A),
+        "pat.salvar": lambda c, v, campo, ano, val: pat.salvar(c, v, campo, ano, val, A), "pat.voltar": lambda c, v, campo: pat.voltar_ao_calculado(c, v, campo, A),
+        "pat.replicar": lambda c, v, campo, ano: pat.replicar(c, v, campo, ano, A), "pat.replicar_todos": lambda c, v, ano: pat.replicar_todos(c, v, ano, A),
+        "fluxo.salvar_premissa": lambda c, v, campo, ano, val: fluxo.salvar_premissa(c, v, campo, ano, val, A), "fluxo.replicar_premissa": lambda c, v, campo, ano: fluxo.replicar_premissa(c, v, campo, ano, A),
+        "dre.importar_padrao": lambda c: dre.importar_arquivo_padrao(c, A),
+        "dre.importar_estrutura": lambda c, b64, nome: dre.importar_estrutura(c, base64.b64decode(b64), nome, A),
+        "ler.premissas_dem": lambda c, v: pd.ler(c, v), "comparar.premissas_dem": lambda c, a, b: pd.comparar(c, a, b),
+        "ler.investimentos": lambda c, v: inv.ler(c, v), "comparar.investimentos": lambda c, a, b: inv.comparar(c, a, b),
+        "ler.capital_giro": lambda c, v: cg.ler(c, v), "comparar.capital_giro": lambda c, a, b: cg.comparar(c, a, b),
+        "ler.captacoes": lambda c, v: cap.ler(c, v), "comparar.captacoes": lambda c, a, b: cap.comparar(c, a, b),
+        "ler.dividas": lambda c, v, emp="agro": div.resumo(c, v, emp), "ler.dividas_balanco": lambda c, v, emp="agro": div.balanco(c, v, emp),
+        "ler.dividas_mensal_por_ano": lambda c, v, emp="agro": div.mensal_por_ano(c, v, emp), "ler.dividas_mensal": lambda c, v, ano, emp="agro": div.mensal(c, v, ano, emp),
+        "ler.dividas_contratos": lambda c, v, emp="agro", ano=None, grupo=None: div.contratos(c, v, emp, ano, grupo), "ler.dividas_importacoes": lambda c: div.listar_importacoes(c),
+        "ler.dre_padrao": lambda c, v: dp.ler(c, v), "ler.dre": lambda c, v: dre.ler(c, v), "comparar.dre": lambda c, a, b: dre.comparar(c, a, b),
+        "ler.balanco": lambda c, v: bal.ler(c, v), "comparar.balanco": lambda c, a, b: bal.comparar(c, a, b),
+        "ler.patrimonio": lambda c, v: pat.ler(c, v), "comparar.patrimonio": lambda c, a, b: pat.comparar(c, a, b),
+        "ler.fluxo_motor": lambda c, v: fluxo.ler(c, v), "ler.projetar": projetar,
+        "transp.salvar": lambda c, v, campo, ano, val: transp.salvar(c, v, campo, ano, val, A), "transp.replicar": lambda c, v, campo, ano: transp.replicar(c, v, campo, ano, A),
+        "transp.replicar_todos": lambda c, v, ano: transp.replicar_todos(c, v, ano, A), "ler.transportadora": lambda c, v: transp.ler(c, v),
     }

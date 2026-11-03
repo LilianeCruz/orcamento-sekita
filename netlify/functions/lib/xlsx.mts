@@ -1,12 +1,12 @@
 // Leitura e criação de planilhas .xlsx (no Python: openpyxl). A planilha lida vira listas de linhas com os valores (fórmulas já calculadas),
-// como o openpyxl com data_only=True: célula vazia = null, data = texto "AAAA-MM-DD HH:MM:SS".
+// como o openpyxl com data_only=True: célula vazia = null, data = Date.
 import ExcelJS from "exceljs";
 
 export interface Planilha { abas: string[]; linhas(aba: string): any[][]; }
 
 function valorDe(v: any): any {
   if (v === null || v === undefined) return null;
-  if (v instanceof Date) return v.toISOString().slice(0, 19).replace("T", " ");
+  if (v instanceof Date) return v;                       // data: o chamador decide o formato
   if (typeof v === "object") {
     if ("result" in v) return valorDe(v.result);
     if ("richText" in v) return v.richText.map((t: any) => t.text).join("");
@@ -14,7 +14,8 @@ function valorDe(v: any): any {
     if ("error" in v) return String(v.error);
     return null;
   }
-  return v;
+  // o openpyxl (Python) deixa o código "_x000D_" do Excel como está; o exceljs o converte em quebra de linha. Mantém o texto igual ao dos dados já importados.
+  return typeof v === "string" ? v.replace(/\r/g, "_x000D_") : v;
 }
 
 export async function abrirPlanilha(conteudo: Uint8Array): Promise<Planilha> {

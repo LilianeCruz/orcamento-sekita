@@ -6,7 +6,7 @@ import json, sqlite3, sys
 def exportar(caminho: str) -> dict:
     con = sqlite3.connect(caminho)
     saida = {}
-    for (nome,) in con.execute("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name"):
+    for (nome,) in con.execute("SELECT name FROM sqlite_master WHERE type='table' AND (name NOT LIKE 'sqlite_%' OR name='sqlite_sequence') ORDER BY name"):
         cur = con.execute(f"SELECT * FROM {nome}")
         saida[nome] = {"colunas": [d[0] for d in cur.description], "linhas": [list(l) for l in cur.fetchall()]}
     return saida
