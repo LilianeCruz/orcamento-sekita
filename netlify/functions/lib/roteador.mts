@@ -1,6 +1,7 @@
 import type { Usuario } from "./auth.mts";
+import type { Bd } from "./bd.mts";
 
-export interface Contexto { usuario: Usuario; params: Record<string, string>; consulta: URLSearchParams; corpo: any; }
+export interface Contexto { bd: Bd; usuario: Usuario; params: Record<string, string>; consulta: URLSearchParams; corpo: any; }
 type Tratador = (c: Contexto) => Promise<unknown> | unknown;
 interface Rota { metodo: string; partes: string[]; tratador: Tratador; }
 

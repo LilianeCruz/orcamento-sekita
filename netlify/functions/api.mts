@@ -1,20 +1,10 @@
 import type { Context } from "@netlify/functions";
 import { usuarioDaRequisicao } from "./lib/auth.mts";
 import { ErroHttp } from "./lib/erros.mts";
-import { Roteador } from "./lib/roteador.mts";
-import { sql } from "./lib/db.mts";
+import { bdPostgres } from "./lib/bd-postgres.mts";
+import { rotas } from "./rotas.mts";
 
-const r = new Roteador();
-
-// ---- rotas ainda em construção: a cada fase, os módulos portados do Python entram aqui (mesmos caminhos e formatos) ----
-r.get("/saude", async () => {
-  const [{ n }] = await sql()`SELECT count(*)::int AS n FROM information_schema.tables WHERE table_schema = 'public'`;
-  return { ok: true, tabelas: n };
-});
-
-r.get("/versoes", async () => sql()`SELECT * FROM versoes ORDER BY ano_base DESC, id DESC`);
-
-// ---- porta de entrada ----
+// ---- porta de entrada: confere o login, acha a rota e roda tudo numa transação (como o sistema em Python: confirma no fim, desfaz se der erro)
 export default async (req: Request, _ctx: Context): Promise<Response> => {
   const json = (dados: unknown, status = 200) => new Response(JSON.stringify(dados), { status, headers: { "Content-Type": "application/json; charset=utf-8" } });
   try {
@@ -27,10 +17,15 @@ export default async (req: Request, _ctx: Context): Promise<Response> => {
     }
 
     const usuario = await usuarioDaRequisicao(req);
-    const achada = r.achar(req.method, caminho);
+    if (req.method === "GET" && caminho === "/saude") {
+      const [{ n }] = await bdPostgres().q<{ n: number }>("SELECT count(*)::int AS n FROM information_schema.tables WHERE table_schema = 'public'");
+      return json({ ok: true, tabelas: n, usuario: usuario.email });
+    }
+    const achada = rotas.achar(req.method, caminho);
     if (!achada) return json({ erro: "Rota não encontrada (ainda não portada): " + req.method + " " + caminho }, 404);
     const corpo = ["POST", "PUT", "PATCH"].includes(req.method) ? await req.json().catch(() => null) : null;
-    return json(await achada.tratador({ usuario, params: achada.params, consulta: url.searchParams, corpo }));
+    const resultado = await bdPostgres().tx((bd) => Promise.resolve(achada.tratador({ bd, usuario, params: achada.params, consulta: url.searchParams, corpo })));
+    return json(resultado);
   } catch (e) {
     if (e instanceof ErroHttp) return json({ erro: e.message }, e.status);
     console.error(e);
