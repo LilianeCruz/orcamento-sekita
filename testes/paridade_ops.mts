@@ -39,7 +39,7 @@ export async function compararOperacoes(banco: string, montarOps: (dados: DadosS
   await bd.q("COMMIT");
   for (const [tabela, t] of Object.entries(ref.depois as DadosSqlite)) {
     const noPg = (await bd.q<{ column_name: string }>("SELECT column_name FROM information_schema.columns WHERE table_schema='public' AND table_name=?", [tabela])).map((x) => x.column_name);
-    const cols = t.colunas.filter((c) => !TEMPO.includes(c) && noPg.includes(c));
+    const cols = t.colunas.filter((c) => !TEMPO.includes(c) && noPg.includes(c) && !(tabela === "auditoria" && c === "id"));       // o id da auditoria pula números quando uma operação falha (o Postgres não devolve o contador)
     if (!cols.length) continue;
     const norm = (l: any) => JSON.stringify(cols.map((c) => (c === "detalhe" ? String(l[c] ?? "").replace(/(\d)\.0\b/g, "$1") : arred(l[c]))));       // o texto da auditoria mostra 120.0 no Python e 120 no TypeScript
     const esperado = t.linhas.map((l) => norm(Object.fromEntries(t.colunas.map((c, i) => [c, l[i]])))).sort();

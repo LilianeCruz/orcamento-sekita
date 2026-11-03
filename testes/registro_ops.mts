@@ -14,6 +14,8 @@ import * as custos from "../netlify/functions/servicos/custos.mts";
 import * as premissas from "../netlify/functions/servicos/premissas.mts";
 import * as rebanho from "../netlify/functions/servicos/rebanho.mts";
 import * as resultado from "../netlify/functions/servicos/resultado.mts";
+import * as real from "../netlify/functions/servicos/realizado.mts";
+import { abrirPlanilha } from "../netlify/functions/lib/xlsx.mts";
 
 const A = "t@x.com";
 const nada = async (p: Promise<unknown>) => { await p; return null; };
@@ -71,3 +73,16 @@ export const registro: Record<string, (bd: Bd, ...a: any[]) => Promise<unknown>>
   "comparar.precos_venda": (bd, a, b) => precos.compararPrecosVenda(bd, a, b), "comparar.pecuaria": (bd, a, b) => pecuaria.compararPecuaria(bd, a, b),
   "comparar.arrendamentos": (bd, a, b) => arr.compararArrendamentos(bd, a, b),
 };
+
+Object.assign(registro, {
+  "real.importar": (bd, b64, arquivo, anoInicial = null, meses = null, mesInicio = null, versaoId = null, quantidades = null) =>
+    real.importar(bd, Buffer.from(b64, "base64"), arquivo, A, anoInicial, meses, mesInicio, versaoId, quantidades ? Object.fromEntries(Object.entries(quantidades).map(([k, v]) => [Number(k), v as number])) : null),
+  "real.excluir_ano": (bd, ano) => nada(real.excluirAno(bd, ano, A)),
+  "real.salvar_periodo": (bd, mi, mf, v = null) => nada(real.salvarPeriodo(bd, mi, mf, v, A)),
+  "real.salvar_quantidade": (bd, cid, q, ano = null) => nada(real.salvarQuantidade(bd, cid, q, A, ano)),
+  "ler.realizado": (bd) => real.ler(bd), "ler.real_periodo": (bd) => real.periodo(bd), "ler.real_quantidades": (bd) => real.quantidadesPorAno(bd),
+  "ler.real_produtos": (bd) => real.produtosVenda(bd), "ler.real_importacoes": (bd) => real.importacoesComparaveis(bd),
+  "real.saldo_inicial": (bd, ano) => real.saldoInicial(bd, ano), "real.valor": (bd, dem, cod, ano) => real.valorRealizado(bd, dem, cod, ano),
+  "real.ultimo_ano": (bd) => real.ultimoAno(bd), "real.periodo_do_ano": (bd, ano) => real.periodoDoAno(bd, ano),
+  "real.modelo_linhas": async (bd) => { const p = await abrirPlanilha(await real.modelo(bd)); return Object.fromEntries(p.abas.map((a) => [a, p.linhas(a)])); },
+});

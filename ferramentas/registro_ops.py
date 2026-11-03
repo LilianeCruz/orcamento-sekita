@@ -66,4 +66,26 @@ def registro():
         "comparar.precos_venda": lambda c, a, b: precos.comparar(c, a, b), "comparar.pecuaria": lambda c, a, b: pecuaria.comparar(c, a, b),
         "comparar.arrendamentos": lambda c, a, b: arr.comparar(c, a, b),
     })
+    R.update(_realizado())
     return R
+
+
+def _realizado():
+    import base64, io
+    from app.servicos import realizado as real
+    def importar(c, b64, arquivo, ano_inicial=None, meses=None, mes_inicio=None, versao_id=None, quantidades=None):
+        q = {int(k): v for k, v in quantidades.items()} if quantidades is not None else None
+        return real.importar(c, base64.b64decode(b64), arquivo, A, ano_inicial, meses, mes_inicio, versao_id, q)
+    def modelo_linhas(c):
+        from openpyxl import load_workbook
+        wb = load_workbook(io.BytesIO(real.modelo(c)), data_only=True)
+        return {ws.title: [list(r) for r in ws.iter_rows(values_only=True)] for ws in wb.worksheets}
+    return {
+        "real.importar": importar, "real.excluir_ano": lambda c, ano: real.excluir_ano(c, ano, A),
+        "real.salvar_periodo": lambda c, mi, mf, v=None: real.salvar_periodo(c, mi, mf, v, A),
+        "real.salvar_quantidade": lambda c, cid, q, ano=None: real.salvar_quantidade(c, cid, q, A, ano),
+        "ler.realizado": lambda c: real.ler(c), "ler.real_periodo": lambda c: real.periodo(c), "ler.real_quantidades": lambda c: real.quantidades_por_ano(c),
+        "ler.real_produtos": lambda c: real.produtos_venda(c), "ler.real_importacoes": lambda c: real.importacoes_comparaveis(c),
+        "real.saldo_inicial": lambda c, ano: real.saldo_inicial(c, ano), "real.valor": lambda c, dem, cod, ano: real.valor_realizado(c, dem, cod, ano),
+        "real.ultimo_ano": lambda c: real.ultimo_ano(c), "real.periodo_do_ano": lambda c, ano: real.periodo_do_ano(c, ano), "real.modelo_linhas": modelo_linhas,
+    }

@@ -1,5 +1,5 @@
 // Rotas da API: mesmos caminhos e formatos do sistema em Python (app/main.py). A cada fase entram os módulos portados.
-import { Roteador } from "./lib/roteador.mts";
+import { Roteador, RespostaArquivo } from "./lib/roteador.mts";
 import { Invalido } from "./lib/erros.mts";
 import * as versoes from "./servicos/versoes.mts";
 import * as culturas from "./servicos/culturas.mts";
@@ -17,6 +17,7 @@ import * as premissas from "./servicos/premissas.mts";
 import * as rebanho from "./servicos/rebanho.mts";
 import * as resultado from "./servicos/resultado.mts";
 import * as transp from "./servicos/transportadora.mts";
+import * as real from "./servicos/realizado.mts";
 
 export const rotas = new Roteador();
 const r = rotas;
@@ -137,3 +138,29 @@ r.get("/versoes/:vid/transportadora", ({ bd, params }) => transp.lerTransportado
 r.post("/versoes/:vid/transportadora/replicar-todos", ({ bd, usuario, params, corpo }) => transp.replicarTodosTransportadora(bd, num(params.vid), corpo.ano, usuario.email));
 r.put("/versoes/:vid/transportadora/:campo/:ano", async ({ bd, usuario, params, corpo }) => { await transp.salvarTransportadora(bd, num(params.vid), params.campo, num(params.ano), corpo.valor, usuario.email); return { ok: true }; });
 r.post("/versoes/:vid/transportadora/:campo/replicar", async ({ bd, usuario, params, corpo }) => ({ anos_alterados: await transp.replicarTransportadora(bd, num(params.vid), params.campo, corpo.ano, usuario.email) }));
+
+// ---- realizado (Balanço e DRE de anos fechados)
+const inteiro = (x: string | null) => (x === null || x === "" ? null : Number(x));
+r.get("/realizado", ({ bd }) => real.ler(bd));
+r.post("/realizado/importar", ({ bd, usuario, consulta, bruto }) => {
+  if (!bruto || !bruto.length) throw Invalido("Nenhum arquivo recebido");
+  let q: Record<number, number> | null = null;
+  const quantidades = consulta.get("quantidades");
+  if (quantidades !== null) {                                       // "id:quantidade,id:quantidade" (quantidade vendida de cada produto no período)
+    q = {};
+    for (const x of quantidades.split(",").filter(Boolean)) {
+      const [k, v] = x.split(":");
+      if (x.split(":").length !== 2 || !Number.isInteger(Number(k)) || k.trim() === "" || v.trim() === "" || Number.isNaN(Number(v))) throw Invalido("Quantidades vendidas em formato inválido");
+      q[Number(k)] = Number(v);
+    }
+  }
+  return real.importar(bd, bruto, consulta.get("arquivo") || "realizado.xlsx", usuario.email, inteiro(consulta.get("ano_inicial")), inteiro(consulta.get("meses")), inteiro(consulta.get("mes_inicio")), inteiro(consulta.get("versao_id")), q);
+});
+r.get("/realizado/produtos", ({ bd }) => real.produtosVenda(bd));
+r.get("/realizado/periodo", ({ bd }) => real.periodo(bd));
+r.put("/realizado/periodo", async ({ bd, usuario, corpo }) => { await real.salvarPeriodo(bd, corpo.mes_inicio, corpo.mes_fim, corpo.versao_id ?? null, usuario.email); return { ok: true }; });
+r.get("/realizado/quantidades", ({ bd }) => real.quantidadesPorAno(bd));
+r.put("/realizado/quantidades/:cid", async ({ bd, usuario, params, corpo }) => { await real.salvarQuantidade(bd, num(params.cid), corpo.quantidade ?? null, usuario.email, corpo.ano ?? null); return { ok: true }; });
+r.get("/realizado/importacoes", ({ bd }) => real.importacoesComparaveis(bd));
+r.get("/realizado/modelo", async ({ bd }) => new RespostaArquivo(await real.modelo(bd), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "modelo-realizado.xlsx"));
+r.delete("/realizado/:ano", async ({ bd, usuario, params }) => { await real.excluirAno(bd, num(params.ano), usuario.email); return { ok: true }; });

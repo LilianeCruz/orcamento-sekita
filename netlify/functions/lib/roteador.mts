@@ -1,7 +1,9 @@
 import type { Usuario } from "./auth.mts";
 import type { Bd } from "./bd.mts";
 
-export interface Contexto { bd: Bd; usuario: Usuario; params: Record<string, string>; consulta: URLSearchParams; corpo: any; }
+export interface Contexto { bd: Bd; usuario: Usuario; params: Record<string, string>; consulta: URLSearchParams; corpo: any; bruto: Uint8Array | null; }
+// resposta que não é JSON (download de planilha, por exemplo)
+export class RespostaArquivo { constructor(public dados: Uint8Array, public tipo: string, public nome: string) {} }
 type Tratador = (c: Contexto) => Promise<unknown> | unknown;
 interface Rota { metodo: string; partes: string[]; tratador: Tratador; }
 
