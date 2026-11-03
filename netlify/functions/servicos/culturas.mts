@@ -39,7 +39,7 @@ export async function listarCulturas(bd: Bd) {
     " SELECT cultura_id FROM culturas_da_versao UNION ALL SELECT cultura_id FROM culturas_extras" +
     " UNION ALL SELECT cultura_id FROM fazendas WHERE cultura_id IS NOT NULL" +
     " UNION ALL SELECT cultura_id FROM precos WHERE preco<>0) u GROUP BY cultura_id")) uso.set(r.cultura_id, r.n);
-  const lista = await bd.q("SELECT * FROM culturas ORDER BY ativa DESC, grupo, nome");
+  const lista = await bd.q('SELECT * FROM culturas ORDER BY ativa DESC, grupo COLLATE "C", nome');
   return { grupos: GRUPOS, unidades: UNIDADES, culturas: lista.map((r) => ({ ...r, nome: String(r.nome), ativa: !!r.ativa, em_uso: (uso.get(r.id) || 0) > 0 })) };
 }
 

@@ -150,7 +150,7 @@ export async function lerArrendamentos(bd: Bd, vid: number) {
   const precos: Record<number, Record<number, number>> = {};
   for (const r of await bd.q("SELECT * FROM precos WHERE versao_id=? ORDER BY cultura_id, ano", [vid])) (precos[r.cultura_id] ??= {})[r.ano] = r.preco;
   const culturas: any[] = [];
-  for (const c of await bd.q("SELECT * FROM culturas ORDER BY grupo, nome")) {
+  for (const c of await bd.q('SELECT * FROM culturas ORDER BY grupo COLLATE "C", nome')) {
     if (!c.ativa && !(c.id in precos)) continue;
     culturas.push({ id: c.id, nome: String(c.nome), grupo: c.grupo, ativa: !!c.ativa, unidade: c.unidade, embalagem: c.embalagem, qtd_por_embalagem: c.qtd_por_embalagem, rotulo: c.embalagem || c.unidade });
   }
