@@ -40,15 +40,21 @@ Cópia do sistema para trabalhar na nuvem. O sistema original (`Orcamento_Sekita
   - Login: `web/login.html`, `web/login.js` e `web/auth.js` (Supabase Auth). A tela principal só abre com sessão e tem o botão **Sair**; toda chamada à API leva o token.
   - Falta: testar com as chaves reais (depois da configuração abaixo) e recriar os dados iniciais do SQLite (classificações de investimento, produtos padrão).
 
-- **Portado e validado contra o Python** (testes de paridade com o banco real: escritas, leituras e comparações, tabela por tabela):
-  versões (criar, copiar, período, horizonte, aprovar, excluir), produtos, grupos de custo, Arrendamentos, áreas, produtividade, preços de venda, pecuária,
-  custos variáveis, premissas por produto, rebanho e **resultado por produto** (motor de safra e anual com estoque), anotações (sem a visão "todas") e Início (andamento).
-- **Portado, ainda sem teste de paridade:** premissas de transportadora.
-- **Falta portar (nesta ordem, por dependência):** realizado (núcleo: saldo inicial, prazos, valor realizado) → premissas dos demonstrativos → investimentos e depreciação →
-  capital de giro → captações → dívidas → premissas da DRE (dre_padrao) → DRE → balanço → patrimônio → fluxo de caixa (dívida de giro automática, com convergência) →
-  demonstrativos (usos e fontes, indicadores) → importação de planilhas (realizado, DRE, dívidas) → orçado × realizado → comparação e impressão → carga dos dados.
-  Como testar cada etapa: acrescentar as operações nos registros `ferramentas/registro_ops.py` e `testes/registro_ops.mts` e criar o teste de paridade da fase.
-- **Alterações feitas no sistema local depois da cópia** devem ser replicadas aqui. Última sincronização: excluir orçamento, tabelas largas (horizontes longos), textos retirados das telas e manual.
+- **Tudo portado para TypeScript e validado contra o Python** (testes de paridade com o banco real: mesmas operações nos dois sistemas, comparando retornos, erros e todas as tabelas):
+  - Fase 1–2: versões, produtos, grupos de custo, Arrendamentos, áreas, produtividade, preços, pecuária, custos variáveis, premissas por produto, rebanho, resultado por produto, transportadora, anotações e Início.
+  - Fase 3 (`paridade_fase3`): **realizado** (importação das três planilhas: modelo, Fechamento Financeiro e banco do Fechamento Contábil; ano em andamento; quantidades vendidas; saldo inicial; prazos).
+  - Fase 4 (`paridade_fase4`): premissas dos demonstrativos, investimentos e depreciação, capital de giro, captações, dívidas (importa o `Endividamento alterado.xlsx` real), premissas padronizadas da DRE, **DRE, balanço, patrimônio líquido e caixa com dívida de giro automática (convergência dos juros)**, importação da estrutura do Fechamento Contábil (arquivo real de 18 MB).
+  - Fase 5 (`paridade_fase5`): fluxo de caixa indireto/simplificado, usos e fontes, indicadores (metas), **orçado × realizado**, **comparação com impacto por grupo de premissas**, impressão e **anotações "todas" com "valor alterado"** (que alimentam o Início).
+- **Carga dos dados feita**: o SQLite do sistema local foi levado para o Supabase com `ferramentas/carregar_supabase.mts` (conferência: todas as tabelas com o mesmo número de linhas). Para repetir: `python3 ferramentas/exportar_sqlite.py <orcamento.db> dump.json` e `netlify dev:exec -- npx tsx ferramentas/carregar_supabase.mts dump.json` (só carrega se a nuvem estiver vazia; `--forcar` substitui). As variáveis do Netlify entram no processo sem aparecer.
+- **Leituras com cache por requisição** (`lib/bd.mts`, `comCache`): os cálculos se chamam uns aos outros e repetem as mesmas consultas; cada consulta vai ao banco uma vez por requisição e qualquer escrita limpa o cache. Medição contra o Supabase (`ferramentas/medir_tempo.mts`): DRE, balanço e fluxo levam cerca de 2,5 s a partir de um computador local (≈ 50 idas ao banco).
+- **Alterações feitas no sistema local depois da cópia** devem ser replicadas aqui (comparar as pastas com `diff -rq`). Última sincronização: nada novo em `app/` nem em `web/` além das diferenças da nuvem (login, token, botão Sair e o aviso do arquivo padrão de dívidas).
+
+## Diferenças conhecidas da nuvem
+
+- **Arquivos pesados**: a função do Netlify aceita corpo de até ~6 MB. O banco do Fechamento Contábil (18 MB) não sobe pela tela; a estrutura (DRE e balanço) já foi levada pela carga. O `Endividamento alterado.xlsx` (2,8 MB) e as planilhas do realizado sobem normalmente.
+- **Botões "padrão"**: não existe o arquivo padrão no servidor; a tela de Endividamento mostra só "Escolher arquivo…" (a importação padrão da DRE responde com aviso).
+- **Tempo das funções**: o limite padrão é 10 s (até 26 s nas configurações do site). As telas comuns ficam em ~2–3 s; a **comparação com impacto por grupo** cria uma cópia temporária por grupo e recalcula tudo, então pode passar de 10 s em orçamentos grandes (se acontecer, aumentar o tempo limite das funções no Netlify ou comparar sem impacto).
+- Os campos antigos do SQLite (`financiado_pct`, `fin_taxa`, `fin_prazo`, `fin_carencia` em `investimento_tipos`) não existem no esquema novo; nada os usava.
 
 ## Configuração (uma vez)
 
@@ -75,6 +81,6 @@ Cópia do sistema para trabalhar na nuvem. O sistema original (`Orcamento_Sekita
 
 ## Riscos conhecidos
 
-- Porte de ~9.300 linhas de Python (178 endpoints, 51 tabelas): trabalho grande, feito em etapas.
-- Leitura de planilhas `.xlsx` no servidor: exige biblioteca equivalente em TypeScript.
+- Porte de ~9.300 linhas de Python (178 endpoints, 51 tabelas): feito; agora é manter o Python e o TypeScript em sincronia quando o sistema local mudar.
+- Leitura de planilhas `.xlsx` no servidor: feita com `exceljs` (o texto lido é igual ao do `openpyxl`, inclusive o código `_x000D_` do Excel).
 - Limite de tempo das funções do Netlify: os cálculos mais pesados (comparação com impacto por grupo) podem precisar de ajuste.

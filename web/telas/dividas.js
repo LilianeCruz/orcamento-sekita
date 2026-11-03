@@ -31,10 +31,10 @@ function htmlDividas() {
   const atual = d.importacao;
   const opcoes = im.importacoes.map((i) => `<option value="${i.id}" ${atual && i.id === atual.id ? "selected" : ""}>#${i.id} · ${esc(i.arquivo)} · ${dt(i.importado_em)} · ${i.qtd_abertos} abertos</option>`).join("");
   const acoes = trava() ? "" : `<div class="linha">
-      <button class="prim" id="btn-div-padrao" ${im.arquivo_padrao_existe ? "" : "disabled"} title="${esc(im.arquivo_padrao)}">Importar do sistema de Endividamento</button>
-      <button class="sec" id="btn-div-arquivo">Escolher arquivo…</button>
+      ${im.arquivo_padrao_existe ? `<button class="prim" id="btn-div-padrao" title="${esc(im.arquivo_padrao)}">Importar do sistema de Endividamento</button>` : ""}
+      <button class="${im.arquivo_padrao_existe ? "sec" : "prim"}" id="btn-div-arquivo">Escolher arquivo…</button>
       <input type="file" id="inp-div-arquivo" accept=".xlsx" hidden>
-      ${im.arquivo_padrao_existe ? "" : `<span class="dim">Arquivo padrão não encontrado: ${esc(im.arquivo_padrao)}</span>`}</div>`;
+      ${im.arquivo_padrao_existe || !im.arquivo_padrao ? "" : `<span class="dim">Arquivo padrão não encontrado: ${esc(im.arquivo_padrao)}</span>`}</div>`;
   const base = `<div class="card"><h2>Base de dívidas</h2>
     <p class="dim">Vem do arquivo <em>Endividamento alterado.xlsx</em>, gerado pelo sistema de Endividamento. Cada importação é guardada, e a versão usa uma delas.</p>${acoes}
     ${atual ? `<div class="linha"><label>Base usada nesta versão <select id="sel-div-base" ${trava() ? "disabled" : ""}>${opcoes}</select></label>
